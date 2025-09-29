@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom header bar gradient */
+.custom-header-bar {
+    background: linear-gradient(90deg, #23408e 0%, #3b5998 100%);
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+    margin-bottom: 2rem;
+}
+
+/* Optional: Make sure the font is clean and modern */
+body, input, button, select, textarea {
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
