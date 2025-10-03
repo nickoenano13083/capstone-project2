@@ -17,6 +17,7 @@ class ChapterController extends Controller
     {
         $search = $request->input('search');
         $chapters = Chapter::with('leader')
+            ->withCount('members')
             ->when($search, function($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
                       ->orWhere('location', 'like', "%{$search}%");

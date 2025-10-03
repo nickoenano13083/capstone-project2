@@ -12,6 +12,8 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ResourceController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AuditLogController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AnnouncementController;
@@ -123,19 +125,11 @@ Route::middleware('auth')->group(function () {
 
     // Member routes with archive functionality
     Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('members/download', [MemberController::class, 'download'])->name('members.download');
         Route::resource('members', MemberController::class);
         Route::patch('members/{member}/archive', [MemberController::class, 'archive'])->name('members.archive');
         Route::patch('members/{member}/unarchive', [MemberController::class, 'unarchive'])->name('members.unarchive');
     });
-    
-    // Archive/Unarchive member routes
-    Route::patch('/members/{member}/archive', [MemberController::class, 'archive'])
-        ->name('members.archive')
-        ->middleware('admin.leader');
-        
-    Route::patch('/members/{member}/unarchive', [MemberController::class, 'unarchive'])
-        ->name('members.unarchive')
-        ->middleware('admin.leader');
     
     // Attendance routes - allow viewing for all authenticated users, but protect other operations
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
@@ -160,12 +154,16 @@ Route::middleware('auth')->group(function () {
             Route::get('/events/{event}/edit', [EventController::class, 'edit'])->name('events.edit');
             Route::put('/events/{event}', [EventController::class, 'update'])->name('events.update');
             Route::delete('/events/{event}', [EventController::class, 'destroy'])->name('events.destroy');
+            Route::patch('/events/{event}/restore', [EventController::class, 'restore'])->name('events.restore');
         });
 
         
         // Public event routes (viewing only)
         Route::get('/events', [EventController::class, 'index'])->name('events.index');
         Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+        
+        // Member QR code route
+        Route::get('/events/{event}/member-qr', [EventController::class, 'memberQrCode'])->name('events.member-qr');
         
         // Check-in routes - accessible by all authenticated users with member profiles
         Route::middleware('auth')->group(function() {
@@ -181,6 +179,8 @@ Route::middleware('auth')->group(function () {
      
         Route::middleware(['auth'])->group(function () {
             Route::resource('prayer-requests', PrayerRequestController::class);
+            Route::patch('/prayer-requests/{prayerRequest}/approve', [PrayerRequestController::class, 'approve'])->name('prayer-requests.approve');
+            Route::patch('/prayer-requests/{prayerRequest}/decline', [PrayerRequestController::class, 'decline'])->name('prayer-requests.decline');
         });
     });
 
@@ -215,7 +215,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/upload-image', [DashboardController::class, 'uploadDashboardImage'])->name('dashboard.uploadImage');
     Route::patch('/dashboard/image/{dashboardImage}', [DashboardController::class, 'updateDashboardImage'])->name('dashboard.image.update');
     Route::delete('/dashboard/image/{dashboardImage}', [DashboardController::class, 'deleteDashboardImage'])->name('dashboard.image.delete');
-    Route::post('/notifications/mark-read', [App\Http\Controllers\DashboardController::class, 'markNotificationsRead'])->name('notifications.markRead');
+    Route::post('/notifications/mark-read', [\App\Http\Controllers\DashboardController::class, 'markNotificationsRead'])->name('notifications.markRead');
 
     // QR Code Routes
     Route::prefix('qr')->name('qr.')->group(function () {
@@ -278,6 +278,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
     Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
     Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+
+    // Activity Log (Admin/Leader)
+    Route::get('/admin/activity-log', [AuditLogController::class, 'index'])->name('admin.activity-log')->middleware('admin.leader');
 });
 
 // Public routes
@@ -332,5 +335,14 @@ Route::post('/test-upload', function (Request $request) {
 Route::get('/upload-test', function () {
     return view('upload-test');
 })->name('upload.test');
+
+// Notification routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/recent', [NotificationController::class, 'getRecent'])->name('notifications.recent');
+});
 
 require __DIR__.'/auth.php';

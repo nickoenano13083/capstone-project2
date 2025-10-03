@@ -13,6 +13,7 @@ use App\Models\Chapter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use App\Services\AuditService;
 
 class DashboardController extends Controller
 {
@@ -42,14 +43,50 @@ class DashboardController extends Controller
         $totalNotifications = $unreadCount + $pendingCount + $answeredCount;
 
         $search = request('search');
-        $members = \App\Models\Member::query();
-        $events = \App\Models\Event::query();
+        $members = collect();
+        $events = collect();
+        $chapters = collect();
+        $prayerRequests = collect();
+        
         if ($search) {
-            $members = $members->where('name', 'like', "%{$search}%");
-            $events = $events->where('title', 'like', "%{$search}%");
+            // Search members
+            $members = \App\Models\Member::where(function($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
+            })->limit(10)->get();
+            
+            // Search events
+            $events = \App\Models\Event::where(function($query) use ($search) {
+                $query->where('title', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('location', 'like', "%{$search}%");
+            })->limit(10)->get();
+            
+            // Search chapters
+            $chapters = \App\Models\Chapter::where('name', 'like', "%{$search}%")
+                ->limit(10)->get();
+            
+            // Search prayer requests (only for admins or if user has prayer requests)
+            if ($user->role === 'Admin') {
+                $prayerRequests = \App\Models\PrayerRequest::where(function($query) use ($search) {
+                    $query->where('request', 'like', "%{$search}%")
+                          ->orWhere('status', 'like', "%{$search}%")
+                          ->orWhereHas('member', function($q) use ($search) {
+                              $q->where('name', 'like', "%{$search}%");
+                          })
+                          ->orWhereHas('user', function($q) use ($search) {
+                              $q->where('name', 'like', "%{$search}%");
+                          });
+                })->limit(10)->get();
+            } elseif ($user->role === 'Member') {
+                $prayerRequests = \App\Models\PrayerRequest::where('user_id', $user->id)
+                    ->where(function($query) use ($search) {
+                        $query->where('request', 'like', "%{$search}%")
+                              ->orWhere('status', 'like', "%{$search}%");
+                    })->limit(10)->get();
+            }
         }
-        $members = $members->get();
-        $events = $events->get();
 
         // Get analytics data
         $totalMembers = \App\Models\Member::count();
@@ -71,7 +108,7 @@ class DashboardController extends Controller
             : 0;
             
         // Get prayer requests for current month
-        $prayerRequests = \App\Models\PrayerRequest::whereMonth('created_at', now()->month)
+        $monthlyPrayerRequests = \App\Models\PrayerRequest::whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->count();
 
@@ -96,7 +133,39 @@ class DashboardController extends Controller
             ->where('status', 'present')
             ->count();
         $totalMessages = 6;
-        $eventsForWidget = \App\Models\Event::orderBy('date', 'asc')->take(2)->get();
+        // Events widget: filter for Members by their chapter, otherwise show general upcoming
+        if ($user->role === 'Member') {
+            $memberChapterId = $user->member->chapter_id ?? $user->preferred_chapter_id;
+            $eventsForWidget = \App\Models\Event::query()
+                ->when($memberChapterId, function ($query) use ($memberChapterId) {
+                    $query->where('chapter_id', $memberChapterId);
+                })
+                ->where(function ($query) {
+                    // upcoming by date if available; fallback to status
+                    $query->whereDate('date', '>=', now()->toDateString())
+                          ->orWhere('status', 'upcoming');
+                })
+                ->orderBy('date', 'asc')
+                ->take(2)
+                ->get();
+            // Next service for member's chapter
+            $nextService = \App\Models\Event::query()
+                ->when($memberChapterId, function ($query) use ($memberChapterId) {
+                    $query->where('chapter_id', $memberChapterId);
+                })
+                ->whereDate('date', '>=', now()->toDateString())
+                ->orderBy('date', 'asc')
+                ->first();
+        } else {
+            $eventsForWidget = \App\Models\Event::where(function ($query) {
+                    $query->whereDate('date', '>=', now()->toDateString())
+                          ->orWhere('status', 'upcoming');
+                })
+                ->orderBy('date', 'asc')
+                ->take(2)
+                ->get();
+            $nextService = null;
+        }
         $theme = Theme::where('month', now()->month)->where('year', now()->year)->first();
         $themeImage = $theme ? asset('storage/' . $theme->image_path) : null;
         $dashboardImage = DashboardImage::latest()->first();
@@ -155,16 +224,19 @@ class DashboardController extends Controller
             'answeredCount',
             'members',
             'events',
+            'chapters',
+            'prayerRequests',
             'search',
             'newSignups',
             'totalAdmins',
             'announcements',
             'attendanceRate',
-            'prayerRequests',
+            'monthlyPrayerRequests',
             'totalNotifications',
             'genderStats',
             'ageGroups',
-            'prayerStats'
+            'prayerStats',
+            'nextService'
         ));
     }
 
@@ -294,12 +366,32 @@ class DashboardController extends Controller
             'reference' => 'required|string|max:255',
         ]);
 
+        // Capture previous verse for audit trail
+        $previous = BibleVerse::find(1);
+
         BibleVerse::updateOrCreate(
             ['id' => 1], // Assuming we always update the same row
             [
                 'verse' => $request->verse,
                 'reference' => $request->reference,
             ]
+        );
+
+        // Audit log with chapter context
+        $user = Auth::user();
+        $chapter = $user->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'bible_verse_updated',
+            'Bible verse updated on dashboard',
+            [
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+                'verse_before' => $previous->verse ?? null,
+                'verse_after' => $request->verse,
+                'reference_before' => $previous->reference ?? null,
+                'reference_after' => $request->reference,
+            ],
+            $user->id
         );
 
         return redirect()->route('dashboard')->with('success', 'Bible verse updated successfully.');
@@ -421,7 +513,25 @@ class DashboardController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        // Capture for audit before delete
+        $previous = BibleVerse::latest()->first();
+
         BibleVerse::truncate(); // This will delete all records
+
+        // Audit log
+        $user = Auth::user();
+        $chapter = $user->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'bible_verse_deleted',
+            'Bible verse removed from dashboard',
+            [
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+                'verse_before' => $previous->verse ?? null,
+                'reference_before' => $previous->reference ?? null,
+            ],
+            $user->id
+        );
 
         return redirect()->route('dashboard')->with('success', 'Bible verse removed successfully.');
     }

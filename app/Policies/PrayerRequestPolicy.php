@@ -57,18 +57,8 @@ class PrayerRequestPolicy
             }
         }
         
-        // Members can view requests from their preferred chapter
-        if ($user->role === 'Member' && $user->preferred_chapter_id) {
-            // Check if prayer request member belongs to the same chapter
-            if ($prayerRequest->member && $prayerRequest->member->chapter_id === $user->preferred_chapter_id) {
-                return true;
-            }
-            
-            // Check if prayer request user has the same preferred chapter
-            if ($prayerRequest->user && $prayerRequest->user->preferred_chapter_id === $user->preferred_chapter_id) {
-                return true;
-            }
-        }
+        // Members should not view others' requests unless they are the owner
+        // (Handled by the owner check above). No additional member access here.
         
         return false;
     }

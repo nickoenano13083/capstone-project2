@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('response')->nullable();
             $table->date('prayer_date');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

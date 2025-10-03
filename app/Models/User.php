@@ -211,6 +211,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Notifications for this user
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Unread notifications for this user
+     */
+    public function unreadNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class)->where('is_read', false);
+    }
+
+    /**
      * Get the URL for the user's dashboard background image.
      *
      * @return string|null
@@ -228,8 +244,8 @@ class User extends Authenticatable
     public function getProfilePhotoUrlAttribute()
     {
         if ($this->profile_photo_path) {
-            // If we have a custom photo, return its URL
-            return Storage::url($this->profile_photo_path);
+            // Return a relative URL so it works across devices (e.g., mobile not resolving APP_URL)
+            return '/storage/' . ltrim($this->profile_photo_path, '/');
         }
 
         // Default to showing the first letter of the name

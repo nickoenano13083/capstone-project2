@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Services\AuditService;
 
 class InvitationCodeController extends Controller
 {
@@ -53,6 +54,23 @@ class InvitationCodeController extends Controller
             $codes[] = $code;
         }
 
+        // Audit: invitation codes generated
+        $user = auth()->user();
+        $chapter = $user->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'invitation_generated',
+            'Invitation code(s) generated',
+            [
+                'codes' => collect($codes)->pluck('code'),
+                'count' => count($codes),
+                'email' => $validated['email'],
+                'expires_in_days' => $validated['expires_in_days'],
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+            ],
+            $user?->id
+        );
+
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => 'Invitation codes generated successfully',
@@ -87,6 +105,21 @@ class InvitationCodeController extends Controller
         }
 
         $invitation->update(['expires_at' => now()]);
+
+        // Audit: invitation code revoked
+        $user = auth()->user();
+        $chapter = $user->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'invitation_revoked',
+            'Invitation code revoked',
+            [
+                'code' => $invitation->code,
+                'email' => $invitation->email,
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+            ],
+            $user?->id
+        );
 
         return back()->with('success', 'Invitation code has been revoked');
     }

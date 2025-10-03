@@ -15,6 +15,13 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             padding: 1.5rem;
             height: 100%;
+            color: #1f2937;
+        }
+
+        .dark .analytics-card {
+            background-color: var(--widget-bg-color, #334155);
+            color: var(--text-primary, #f1f5f9);
+            border: 1px solid #475569;
         }
         .progress-bar-custom {
             height: 8px;
@@ -47,6 +54,10 @@
             font-size: 18px;
             margin-bottom: 16px;
         }
+
+        .dark h5 {
+            color: var(--text-primary, #f1f5f9);
+        }
         .analytics-header {
             background-color:rgb(35, 58, 101);
             color: #2D3748;
@@ -55,6 +66,12 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             margin-bottom: 24px;
             border: 1px solid #e2e8f0;
+        }
+
+        .dark .analytics-header {
+            background-color: var(--widget-bg-color, #334155);
+            color: var(--text-primary, #f1f5f9);
+            border: 1px solid #475569;
         }
         .analytics-header h1 {
             font-size: 1.5rem;
@@ -75,85 +92,33 @@
             margin: 0;
             line-height: 1.5;
         }
+
+        .dark .analytics-header h1 {
+            color: var(--text-primary, #f1f5f9);
+        }
+        .dark .analytics-header h1 i {
+            color: var(--text-primary, #f1f5f9);
+        }
+        .dark .analytics-header p {
+            color: var(--text-secondary, #94a3b8);
+        }
     </style>
 
-    <div class="bg-gray-50 p-4">
+    <div class="bg-gray-50 p-4" style="background: var(--body-bg-color, #f0f2f5); color: var(--text-primary, #333);">
         @if(auth()->user() && auth()->user()->role === 'Admin')
             <header class="analytics-header">
                 <h1><i class="fas fa-chart-pie"></i> Church Analytics Dashboard</h1>
                 <p>Track and analyze your church's growth and engagement metrics</p>
             </header>
             
+            <!-- Top Row: Members by Age Group and Prayer Request Status -->
             <div class="flex flex-col lg:flex-row gap-6 mb-6">
-                <!-- Overall Members Chart -->
+                <!-- Members by Age Group -->
                 <div class="flex-1">
                     <div class="analytics-card h-full">
-                        <div class="flex justify-between items-center mb-4">
-                            <h5>Overall Members</h5>
-                            <span class="text-sm text-gray-400">Total: {{ $totalMembers }}</span>
-                        </div>
-                        <div class="flex flex-col lg:flex-row gap-4">
-                            <div class="chart-container flex-1">
-                                <canvas id="overallScoreChart"></canvas>
-                            </div>
-                            <div class="flex flex-col justify-center gap-4 w-full lg:w-1/3">
-                                <div class="text-center p-3 rounded-lg bg-gray-100">
-                                    <div class="text-2xl font-bold text-indigo-400">{{ $genderStats['male'] ?? 0 }}</div>
-                                    <div class="text-sm text-gray-400">Male</div>
-                                </div>
-                                <div class="text-center p-3 rounded-lg bg-gray-100">
-                                    <div class="text-2xl font-bold text-pink-400">{{ $genderStats['female'] ?? 0 }}</div>
-                                    <div class="text-sm text-gray-400">Female</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Top Chapters by Members -->
-                <div class="flex-1">
-                    <div class="analytics-card h-full">
-                        <div class="flex justify-between items-center mb-4">
-                            <h5>Top Chapters by Members</h5>
-                            <span class="text-sm text-gray-400">{{ count($chapterStats) }} chapters</span>
-                        </div>
-                        <div class="space-y-4">
-                            @foreach($chapterStats as $chapter)
-                            <div>
-                                <div class="flex justify-between text-sm mb-1">
-                                    <span class="font-medium text-gray-600">{{ $chapter['name'] }}</span>
-                                    <span class="text-gray-500">{{ $chapter['members'] }} members</span>
-                                </div>
-                                <div class="progress-bar-custom">
-                                    <div class="progress-bar-fill" style="width: {{ $totalMembers > 0 ? ($chapter['members'] / $totalMembers) * 100 : 0 }}%;"></div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Second Row of Charts -->
-            <div class="flex flex-col lg:flex-row gap-6 mb-6 mt-6">
-                <!-- Members by Gender -->
-                <div class="flex-1">
-                    <div class="analytics-card h-full">
-                        <h5 class="mb-4">Members by Gender</h5>
-                        <div class="flex flex-col lg:flex-row gap-4">
-                            <div class="chart-container flex-1">
-                                <canvas id="genderChart"></canvas>
-                            </div>
-                            <div class="flex flex-col justify-center gap-4 w-full lg:w-1/3">
-                                <div class="text-center p-3 rounded-lg bg-gray-100">
-                                    <div class="text-2xl font-bold text-indigo-400">{{ $genderStats['male'] ?? 0 }}</div>
-                                    <div class="text-sm text-gray-400">Male</div>
-                                </div>
-                                <div class="text-center p-3 rounded-lg bg-gray-100">
-                                    <div class="text-2xl font-bold text-pink-400">{{ $genderStats['female'] ?? 0 }}</div>
-                                    <div class="text-sm text-gray-400">Female</div>
-                                </div>
-                            </div>
+                        <h5 class="mb-4">Members by Age Group</h5>
+                        <div class="chart-container">
+                            <canvas id="ageChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -181,14 +146,77 @@
                 </div>
             </div>
 
-            <!-- Third Row of Charts -->
-            <div class="flex flex-col lg:flex-row gap-6 mb-6">
-                <!-- Members by Age Group -->
+            <!-- Second Row: Overall Members and Members by Gender -->
+            <div class="flex flex-col lg:flex-row gap-6 mb-6 mt-6">
+                <!-- Overall Members Chart -->
                 <div class="flex-1">
                     <div class="analytics-card h-full">
-                        <h5 class="mb-4">Members by Age Group</h5>
-                        <div class="chart-container">
-                            <canvas id="ageChart"></canvas>
+                        <div class="flex justify-between items-center mb-4">
+                            <h5>Overall Members</h5>
+                            <span class="text-sm text-gray-400">Total: {{ $totalMembers }}</span>
+                        </div>
+                        <div class="flex flex-col lg:flex-row gap-4">
+                            <div class="chart-container flex-1">
+                                <canvas id="overallScoreChart"></canvas>
+                            </div>
+                            <div class="flex flex-col justify-center gap-4 w-full lg:w-1/3">
+                                <div class="text-center p-3 rounded-lg bg-gray-100">
+                                    <div class="text-2xl font-bold text-indigo-400">{{ $genderStats['male'] ?? 0 }}</div>
+                                    <div class="text-sm text-gray-400">Male</div>
+                                </div>
+                                <div class="text-center p-3 rounded-lg bg-gray-100">
+                                    <div class="text-2xl font-bold text-pink-400">{{ $genderStats['female'] ?? 0 }}</div>
+                                    <div class="text-sm text-gray-400">Female</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Members by Gender -->
+                <div class="flex-1">
+                    <div class="analytics-card h-full">
+                        <h5 class="mb-4">Members by Gender</h5>
+                        <div class="flex flex-col lg:flex-row gap-4">
+                            <div class="chart-container flex-1">
+                                <canvas id="genderChart"></canvas>
+                            </div>
+                            <div class="flex flex-col justify-center gap-4 w-full lg:w-1/3">
+                                <div class="text-center p-3 rounded-lg bg-gray-100">
+                                    <div class="text-2xl font-bold text-indigo-400">{{ $genderStats['male'] ?? 0 }}</div>
+                                    <div class="text-sm text-gray-400">Male</div>
+                                </div>
+                                <div class="text-center p-3 rounded-lg bg-gray-100">
+                                    <div class="text-2xl font-bold text-pink-400">{{ $genderStats['female'] ?? 0 }}</div>
+                                    <div class="text-sm text-gray-400">Female</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Third Row: Top Chapters by Members and Event & Attendance Trends -->
+            <div class="flex flex-col lg:flex-row gap-6 mb-6">
+                <!-- Top Chapters by Members -->
+                <div class="flex-1">
+                    <div class="analytics-card h-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <h5>Top Chapters by Members</h5>
+                            <span class="text-sm text-gray-400">{{ count($chapterStats) }} chapters</span>
+                        </div>
+                        <div class="space-y-4">
+                            @foreach($chapterStats as $chapter)
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="font-medium text-gray-600">{{ $chapter['name'] }}</span>
+                                    <span class="text-gray-500">{{ $chapter['members'] }} members</span>
+                                </div>
+                                <div class="progress-bar-custom">
+                                    <div class="progress-bar-fill" style="width: {{ $totalMembers > 0 ? ($chapter['members'] / $totalMembers) * 100 : 0 }}%;"></div>
+                                </div>
+                            </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
@@ -213,8 +241,9 @@
                     const eventsPerMonth = @json($eventsPerMonth);
                     const attendanceTrend = @json($attendanceTrend);
                     
-                    const chartTextColor = '#1f2937';
-                    const chartGridColor = 'rgba(0, 0, 0, 0.1)';
+                    const isDark = document.documentElement.classList.contains('dark');
+                    const chartTextColor = isDark ? '#f1f5f9' : '#1f2937';
+                    const chartGridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 
                     const overallScoreChartCtx = document.getElementById('overallScoreChart').getContext('2d');
                     new Chart(overallScoreChartCtx, {
@@ -245,7 +274,7 @@
                                 let centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
                                 
                                 ctx.font = 'bold 48px sans-serif';
-                                ctx.fillStyle = '#1f2937';
+                                ctx.fillStyle = isDark ? '#f1f5f9' : '#1f2937';
                                 ctx.textAlign = 'center';
                                 ctx.textBaseline = 'middle';
                                 ctx.fillText(totalMembers, centerX, centerY);
@@ -323,7 +352,7 @@
                                 },
                                 datalabels: {
                                     display: true,
-                                    color: '#1f2937',
+                                    color: isDark ? '#f1f5f9' : '#1f2937',
                                     anchor: 'end',
                                     align: 'top',
                                     formatter: function(value) {

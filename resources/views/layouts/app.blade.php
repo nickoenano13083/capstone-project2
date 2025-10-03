@@ -63,6 +63,36 @@
                 transform: scale(0.95);
             }
 
+            /* Theme toggle mobile button */
+            .theme-toggle-mobile {
+                position: fixed;
+                top: 1.25rem;
+                right: 1.25rem;
+                z-index: 60;
+                background: rgba(35, 60, 102, 0.9);
+                backdrop-filter: blur(5px);
+                color: white;
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                border-radius: 8px;
+                width: 2.75rem;
+                height: 2.75rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            .theme-toggle-mobile:hover {
+                background: rgba(35, 60, 102, 1);
+                transform: scale(1.05);
+            }
+
+            .theme-toggle-mobile:active {
+                transform: scale(0.95);
+            }
+
             /* Sidebar styles */
             .sidebar {
                 position: fixed;
@@ -248,10 +278,11 @@
             }
         </style>
     </head>
-    <body class="font-sans antialiased">
+    <body class="font-sans antialiased" id="app-body">
         <button class="mobile-menu-button" id="mobileMenuButton" aria-label="Toggle menu">
             <i class="fas fa-bars text-xl"></i>
         </button>
+       
         <div class="min-h-screen bg-gray-100 flex">
             {{-- Overlay --}}
             <div class="overlay" id="overlay"></div>
@@ -387,6 +418,16 @@
                             </a>
                         </li>
                         @endif
+                        @if(in_array(auth()->user()->role, ['Admin', 'Leader']))
+                        <li>
+                            <a href="{{ route('admin.activity-log') }}"
+                               class="nav-item flex items-center px-4 py-3 rounded-lg text-slate-200 hover:text-white transition-colors duration-200 {{ request()->routeIs('admin.activity-log') ? 'bg-white text-slate-800' : '' }}"
+                            >
+                                <i class="fas fa-list w-5 text-center mr-3 {{ request()->routeIs('admin.activity-log') ? 'text-slate-800' : '' }}"></i>
+                                <span class="{{ request()->routeIs('admin.activity-log') ? 'text-slate-800' : '' }}">Activity Log</span>
+                            </a>
+                        </li>
+                        @endif
                         @if(auth()->user()->role === 'Member')
                         <li>
                             <a href="{{ route('profile.my-qr-code') }}"
@@ -397,16 +438,7 @@
                             </a>
                         </li>
                         @endif
-                        @if(in_array(auth()->user()->role, ['Admin', 'Leader']))
-                        <li>
-                            <a href="{{ route('analytics.index') }}"
-                               class="nav-item flex items-center px-4 py-3 rounded-lg text-slate-200 hover:text-white transition-colors duration-200 {{ request()->routeIs('analytics.index') ? 'bg-white text-slate-800' : '' }}"
-                            >
-                                <i class="fas fa-chart-bar w-5 text-center mr-3 {{ request()->routeIs('analytics.index') ? 'text-slate-800' : '' }}"></i>
-                                <span class="{{ request()->routeIs('analytics.index') ? 'text-slate-800' : '' }}">Analytics</span>
-                            </a>
-                        </li>
-                        @endif
+                        {{-- Analytics link hidden intentionally --}}
                         <li>
                             <a href="{{ route('profile.edit') }}"
                                class="nav-item flex items-center px-4 py-3 rounded-lg text-slate-200 hover:text-white transition-colors duration-200 {{ request()->routeIs('profile.edit') ? 'bg-white text-slate-800' : '' }}"
@@ -438,6 +470,7 @@
             
             {{-- Main Content --}}
             <div class="main-content flex-1 flex flex-col min-h-screen">
+
                 <!-- Page Heading -->
                 @if(isset($header))
                     <header class="bg-white shadow">
@@ -524,6 +557,43 @@
                 sidebar.classList.remove('active');
                 overlay.classList.remove('active');
             });
+
+            // Theme toggle functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                // Load theme from localStorage
+                let isDark = localStorage.getItem('dashboardTheme') === 'dark';
+                // Helper to set theme
+                function setTheme(isDark) {
+                    if (isDark) {
+                        document.documentElement.classList.add('dark');
+                        const themeIcon = document.getElementById('theme-icon-mobile');
+                        if (themeIcon) themeIcon.className = 'fas fa-sun';
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        const themeIcon = document.getElementById('theme-icon-mobile');
+                        if (themeIcon) themeIcon.className = 'fas fa-moon';
+                    }
+                }
+                setTheme(isDark);
+
+            });
+
+            // Global theme toggle function
+            function toggleTheme() {
+                let isDark = document.documentElement.classList.contains('dark');
+                let newTheme = !isDark;
+                localStorage.setItem('dashboardTheme', newTheme ? 'dark' : 'light');
+                
+                if (newTheme) {
+                    document.documentElement.classList.add('dark');
+                    const themeIcon = document.getElementById('theme-icon-mobile');
+                    if (themeIcon) themeIcon.className = 'fas fa-sun';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    const themeIcon = document.getElementById('theme-icon-mobile');
+                    if (themeIcon) themeIcon.className = 'fas fa-moon';
+                }
+            }
         </script>
     </body>
 </html>

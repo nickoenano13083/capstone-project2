@@ -7,12 +7,10 @@
         </div>
     </x-slot>
 
-    <div class="py-6">
+    <div class="min-h-screen py-8" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
         <div class="w-full px-4 sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                    <x-events.form :chapters="$chapters" />
-                </div>
+            <div class="max-w-4xl mx-auto">
+                <x-events.form :chapters="$chapters" />
             </div>
         </div>
     </div>

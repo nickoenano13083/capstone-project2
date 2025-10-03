@@ -32,12 +32,20 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Personal Information Card -->
-        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 {{ auth()->user()->isAdmin() ? 'opacity-75' : '' }}">
             <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
                 <svg class="h-5 w-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
                 Personal Information
+                @if(auth()->user()->isAdmin())
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                        Read Only
+                    </span>
+                @endif
             </h3>
             
             <div class="space-y-4">
@@ -49,7 +57,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
                         </div>
-                        <x-text-input id="name" name="name" type="text" class="pl-10 block w-full min-h-[44px]" :value="old('name', $member?->name)" required autofocus />
+                        @if(auth()->user()->isAdmin())
+                            <div class="pl-10 block w-full min-h-[44px] bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-gray-700 flex items-center">
+                                {{ old('name', $member?->name) }}
+                            </div>
+                            <input type="hidden" name="name" value="{{ old('name', $member?->name) }}">
+                        @else
+                            <x-text-input id="name" name="name" type="text" class="pl-10 block w-full min-h-[44px]" :value="old('name', $member?->name)" required autofocus />
+                        @endif
                     </div>
                     <x-input-error :messages="$errors->get('name')" class="mt-1" />
                 </div>
@@ -62,7 +77,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                         </div>
-                        <x-text-input id="email" name="email" type="email" class="pl-10 block w-full min-h-[44px]" :value="old('email', $member?->email)" required />
+                        @if(auth()->user()->isAdmin())
+                            <div class="pl-10 block w-full min-h-[44px] bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-gray-700 flex items-center">
+                                {{ old('email', $member?->email) }}
+                            </div>
+                            <input type="hidden" name="email" value="{{ old('email', $member?->email) }}">
+                        @else
+                            <x-text-input id="email" name="email" type="email" class="pl-10 block w-full min-h-[44px]" :value="old('email', $member?->email)" required />
+                        @endif
                     </div>
                     <x-input-error :messages="$errors->get('email')" class="mt-1" />
                 </div>
@@ -75,7 +97,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
                             </svg>
                         </div>
-                        <x-text-input id="phone" name="phone" type="tel" class="pl-10 block w-full min-h-[44px]" :value="old('phone', $member?->phone)" required />
+                        @if(auth()->user()->isAdmin())
+                            <div class="pl-10 block w-full min-h-[44px] bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-gray-700 flex items-center">
+                                {{ old('phone', $member?->phone) }}
+                            </div>
+                            <input type="hidden" name="phone" value="{{ old('phone', $member?->phone) }}">
+                        @else
+                            <x-text-input id="phone" name="phone" type="tel" class="pl-10 block w-full min-h-[44px]" :value="old('phone', $member?->phone)" required />
+                        @endif
                     </div>
                     <x-input-error :messages="$errors->get('phone')" class="mt-1" />
                 </div>
@@ -89,7 +118,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             </svg>
                         </div>
-                        <textarea id="address" name="address" rows="3" class="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm min-h-[80px]" required>{{ old('address', $member?->address) }}</textarea>
+                        @if(auth()->user()->isAdmin())
+                            <div class="pl-10 block w-full min-h-[80px] bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-gray-700 whitespace-pre-wrap">
+                                {{ old('address', $member?->address) }}
+                            </div>
+                            <input type="hidden" name="address" value="{{ old('address', $member?->address) }}">
+                        @else
+                            <textarea id="address" name="address" rows="3" class="block w-full pl-10 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm min-h-[80px]" required>{{ old('address', $member?->address) }}</textarea>
+                        @endif
                     </div>
                     <x-input-error :messages="$errors->get('address')" class="mt-1" />
                 </div>
@@ -102,7 +138,14 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                         </div>
-                        <x-text-input id="birthday" name="birthday" type="date" class="pl-10 block w-full min-h-[44px]" :value="old('birthday', $member?->birthday?->format('Y-m-d'))" />
+                        @if(auth()->user()->isAdmin())
+                            <div class="pl-10 block w-full min-h-[44px] bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-gray-700 flex items-center">
+                                {{ old('birthday', $member?->birthday?->format('Y-m-d')) ?: 'Not specified' }}
+                            </div>
+                            <input type="hidden" name="birthday" value="{{ old('birthday', $member?->birthday?->format('Y-m-d')) }}">
+                        @else
+                            <x-text-input id="birthday" name="birthday" type="date" class="pl-10 block w-full min-h-[44px]" :value="old('birthday', $member?->birthday?->format('Y-m-d'))" />
+                        @endif
                     </div>
                     <x-input-error :messages="$errors->get('birthday')" class="mt-1" />
                 </div>
@@ -110,12 +153,19 @@
                 <div>
                     <x-input-label for="gender" :value="__('Gender')" class="text-sm font-medium text-gray-700" />
                     <div class="mt-1 relative">
-                        <select id="gender" name="gender" class="block w-full pl-10 pr-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm min-h-[44px]">
-                            <option value="">Select Gender</option>
-                            @foreach($genders as $g)
-                                <option value="{{ $g }}" {{ old('gender', $member?->gender) === $g ? 'selected' : '' }}>{{ $g }}</option>
-                            @endforeach
-                        </select>
+                        @if(auth()->user()->isAdmin())
+                            <div class="pl-10 block w-full min-h-[44px] bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-gray-700 flex items-center">
+                                {{ old('gender', $member?->gender) ?: 'Not specified' }}
+                            </div>
+                            <input type="hidden" name="gender" value="{{ old('gender', $member?->gender) }}">
+                        @else
+                            <select id="gender" name="gender" class="block w-full pl-10 pr-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm min-h-[44px]">
+                                <option value="">Select Gender</option>
+                                @foreach($genders as $g)
+                                    <option value="{{ $g }}" {{ old('gender', $member?->gender) === $g ? 'selected' : '' }}>{{ $g }}</option>
+                                @endforeach
+                            </select>
+                        @endif
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>

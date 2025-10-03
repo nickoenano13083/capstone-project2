@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\PrayerRequest;
 use App\Models\Member;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Services\AuditService;
 
 class PrayerRequestController extends Controller
 {
@@ -17,10 +19,16 @@ class PrayerRequestController extends Controller
         $memberId = $request->query('member_id');
         $status = $request->query('status');
         $dateRange = $request->query('date_range');
+        $archived = $request->boolean('archived');
         $chapterId = $request->query('chapter_id');
+        $category = $request->query('category');
         
         $query = PrayerRequest::with(['member.chapter', 'user.preferredChapter'])
             ->orderBy('created_at', 'desc');
+        
+        if ($archived) {
+            $query->onlyTrashed();
+        }
             
         // Get members and chapters for filter dropdowns
         $members = collect();
@@ -82,6 +90,11 @@ class PrayerRequestController extends Controller
             $query->where('status', $status);
         }
         
+        // Apply category filter
+        if (!empty($category)) {
+            $query->where('category', $category);
+        }
+
         if (!empty($dateRange) && $dateRange !== 'all' && $dateRange !== '') {
             $now = now();
             switch ($dateRange) {
@@ -131,7 +144,7 @@ class PrayerRequestController extends Controller
             });
         }
         
-        $prayerRequests = $query->paginate(10);
+        $prayerRequests = $query->paginate(10)->appends($request->query());
         
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -149,7 +162,9 @@ class PrayerRequestController extends Controller
             'selectedStatus' => $status,
             'selectedDateRange' => $dateRange,
             'chapters' => $chapters,
-            'chapterId' => $chapterId
+            'chapterId' => $chapterId,
+            'archived' => $archived,
+            'selectedCategory' => $category,
         ]);
     }
 
@@ -184,6 +199,7 @@ class PrayerRequestController extends Controller
             'request' => 'required|string|max:1000',
             'is_anonymous' => 'sometimes|boolean',
             'member_id' => 'sometimes|exists:members,id',
+            'category' => 'nullable|in:healing,family,work_school,deliverance,church,other',
         ]);
 
         $prayerRequest = new PrayerRequest([
@@ -194,6 +210,10 @@ class PrayerRequestController extends Controller
             'user_id' => Auth::id(),
         ]);
 
+        if (isset($validated['category'])) {
+            $prayerRequest->category = $validated['category'];
+        }
+
         if (isset($validated['member_id'])) {
             $prayerRequest->member_id = $validated['member_id'];
         } elseif (Auth::user()->member) {
@@ -201,6 +221,26 @@ class PrayerRequestController extends Controller
         }
 
         $prayerRequest->save();
+
+        // Audit: prayer request created
+        $user = Auth::user();
+        $chapter = $prayerRequest->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'prayer_request_created',
+            'Prayer request created',
+            [
+                'prayer_request_id' => $prayerRequest->id,
+                'member_id' => $prayerRequest->member_id,
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+                'status' => $prayerRequest->status,
+                'category' => $prayerRequest->category ?? null,
+            ],
+            $user?->id
+        );
+
+        // Notify admins/leaders of the same chapter as the member/creator
+        NotificationService::notifyPrayerRequestCreatedForAdmins($prayerRequest, Auth::user());
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -217,9 +257,11 @@ class PrayerRequestController extends Controller
     {
         $this->authorize('view', $prayerRequest);
         
+        // Eager load approver/responder and their chapters for display
+        $prayerRequest->load(['member', 'user', 'approver.preferredChapter', 'responder.preferredChapter']);
         if (request()->wantsJson() || request()->ajax()) {
             return response()->json([
-                'prayerRequest' => $prayerRequest->load(['member', 'user'])
+                'prayerRequest' => $prayerRequest
             ]);
         }
         
@@ -260,14 +302,44 @@ class PrayerRequestController extends Controller
             'response' => 'nullable|string|max:1000',
             'is_anonymous' => 'sometimes|boolean',
             'member_id' => 'sometimes|exists:members,id',
+            'category' => 'sometimes|nullable|in:healing,family,work_school,deliverance,church,other',
         ]);
 
+        // Check if status is changing to 'answered' and send notification
+        $wasApproved = $prayerRequest->status === 'answered';
+        $before = $prayerRequest->only(['status','response','is_anonymous','member_id','category']);
         $prayerRequest->update($validated);
+        if (array_key_exists('response', $validated) && auth()->user()->can('manage', PrayerRequest::class)) {
+            $prayerRequest->responded_by = Auth::id();
+            $prayerRequest->save();
+        }
+        
+        // If status changed to 'answered' and it wasn't already approved, send notification
+        if (!$wasApproved && $prayerRequest->status === 'answered') {
+            NotificationService::notifyPrayerRequestApproved($prayerRequest, Auth::user());
+        }
+
+        // Audit: prayer request updated
+        $user = Auth::user();
+        $chapter = $prayerRequest->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'prayer_request_updated',
+            'Prayer request updated',
+            [
+                'prayer_request_id' => $prayerRequest->id,
+                'member_id' => $prayerRequest->member_id,
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+                'before' => $before,
+                'after' => $prayerRequest->only(['status','response','is_anonymous','member_id','category']),
+            ],
+            $user?->id
+        );
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'message' => 'Prayer request updated successfully',
-                'prayerRequest' => $prayerRequest->load(['member', 'user']),
+                'prayerRequest' => $prayerRequest->load(['member', 'user', 'responder.preferredChapter']),
             ]);
         }
 
@@ -279,6 +351,21 @@ class PrayerRequestController extends Controller
     {
         $this->authorize('delete', $prayerRequest);
         
+        // Audit: prayer request deleted
+        $user = Auth::user();
+        $chapter = $prayerRequest->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'prayer_request_deleted',
+            'Prayer request deleted',
+            [
+                'prayer_request_id' => $prayerRequest->id,
+                'member_id' => $prayerRequest->member_id,
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+            ],
+            $user?->id
+        );
+
         $prayerRequest->delete();
 
         if (request()->wantsJson() || request()->ajax()) {
@@ -289,6 +376,79 @@ class PrayerRequestController extends Controller
 
         return redirect()->route('prayer-requests.index')
             ->with('success', 'Prayer request deleted successfully');
+    }
+
+    public function approve(PrayerRequest $prayerRequest)
+    {
+        $this->authorize('manage', PrayerRequest::class);
+        
+        // Check if it was already approved to avoid duplicate notifications
+        $wasApproved = $prayerRequest->status === 'answered';
+        
+        $prayerRequest->status = 'answered';
+        $prayerRequest->approved_by = Auth::id();
+        $prayerRequest->save();
+
+        // Audit: prayer request approved
+        $user = Auth::user();
+        $chapter = $prayerRequest->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'prayer_request_approved',
+            'Prayer request approved',
+            [
+                'prayer_request_id' => $prayerRequest->id,
+                'member_id' => $prayerRequest->member_id,
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+            ],
+            $user?->id
+        );
+        
+        // Send notification if it wasn't already approved
+        if (!$wasApproved) {
+            NotificationService::notifyPrayerRequestApproved($prayerRequest, Auth::user());
+        }
+        
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'message' => 'Prayer request approved successfully',
+                'prayerRequest' => $prayerRequest->load(['member', 'user', 'approver.preferredChapter']),
+            ]);
+        }
+        
+        return back()->with('success', 'Prayer request approved successfully');
+    }
+
+    public function decline(PrayerRequest $prayerRequest)
+    {
+        $this->authorize('manage', PrayerRequest::class);
+        
+        $prayerRequest->status = 'declined';
+        $prayerRequest->save();
+
+        // Audit: prayer request declined
+        $user = Auth::user();
+        $chapter = $prayerRequest->member->chapter ?? $user->preferredChapter ?? null;
+        AuditService::log(
+            'prayer_request_declined',
+            'Prayer request declined',
+            [
+                'prayer_request_id' => $prayerRequest->id,
+                'member_id' => $prayerRequest->member_id,
+                'chapter_id' => $chapter->id ?? null,
+                'chapter_name' => $chapter->name ?? null,
+            ],
+            $user?->id
+        );
+        
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'message' => 'Prayer request declined successfully',
+                'prayerRequest' => $prayerRequest->load(['member', 'user']),
+            ]);
+        }
+        
+        return back()->with('success', 'Prayer request declined successfully');
     }
 
     public function getStats()

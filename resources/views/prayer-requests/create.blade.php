@@ -210,27 +210,53 @@
                         <!-- Prayer Request -->
                         <div class="mb-4 mobile-form-group">
                             <x-input-label for="request" :value="__('Prayer Request')" />
-                            <textarea id="request" name="request" rows="4" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" placeholder="Enter the prayer request details..." required>{{ old('request') }}</textarea>
+                            <textarea id="request" name="request" rows="4" maxlength="1000" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" placeholder="Enter the prayer request details..." required>{{ old('request') }}</textarea>
+                            <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                                <div class="flex items-center gap-2">
+                                    <span>Suggestions:</span>
+                                    <button type="button" class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100 transition" data-prayer-template="Please pray for healing and full recovery.">Healing</button>
+                                    <button type="button" class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100 transition" data-prayer-template="Praying for God’s provision and financial breakthrough.">Provision</button>
+                                    <button type="button" class="px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100 transition" data-prayer-template="Seeking guidance and wisdom for decisions ahead.">Guidance</button>
+                                </div>
+                                <span id="request-char-count">0 / 1000</span>
+                            </div>
                             <x-input-error :messages="$errors->get('request')" class="mt-2 mobile-error" />
                         </div>
 
-                        <!-- Status -->
+                        <!-- Category -->
                         <div class="mb-4 mobile-form-group">
-                            <x-input-label for="status" :value="__('Status')" />
-                            <select id="status" name="status" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
-                                <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="in_progress" {{ old('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                <option value="answered" {{ old('status') == 'answered' ? 'selected' : '' }}>Answered</option>
+                            <x-input-label for="category" :value="__('Category')" />
+                            <select id="category" name="category" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+                                <option value="">Select a category (optional)</option>
+                                <option value="healing" {{ old('category') == 'healing' ? 'selected' : '' }}>Healing</option>
+                                <option value="family" {{ old('category') == 'family' ? 'selected' : '' }}>Family</option>
+                                <option value="work_school" {{ old('category') == 'work_school' ? 'selected' : '' }}>Work/School</option>
+                                <option value="deliverance" {{ old('category') == 'deliverance' ? 'selected' : '' }}>Deliverance</option>
+                                <option value="church" {{ old('category') == 'church' ? 'selected' : '' }}>Church</option>
+                                <option value="other" {{ old('category') == 'other' ? 'selected' : '' }}>Other</option>
                             </select>
-                            <x-input-error :messages="$errors->get('status')" class="mt-2 mobile-error" />
+                            <x-input-error :messages="$errors->get('category')" class="mt-2 mobile-error" />
                         </div>
 
-                        <!-- Response -->
-                        <div class="mb-4 mobile-form-group">
-                            <x-input-label for="response" :value="__('Response (Optional)')" />
-                            <textarea id="response" name="response" rows="3" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" placeholder="Enter any response or notes...">{{ old('response') }}</textarea>
-                            <x-input-error :messages="$errors->get('response')" class="mt-2 mobile-error" />
-                        </div>
+                        @if(auth()->user()->role !== 'Member')
+                            <!-- Status -->
+                            <div class="mb-4 mobile-form-group">
+                                <x-input-label for="status" :value="__('Status')" />
+                                <select id="status" name="status" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                                    <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="in_progress" {{ old('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                                    <option value="answered" {{ old('status') == 'answered' ? 'selected' : '' }}>Answered</option>
+                                </select>
+                                <x-input-error :messages="$errors->get('status')" class="mt-2 mobile-error" />
+                            </div>
+
+                            <!-- Response -->
+                            <div class="mb-4 mobile-form-group">
+                                <x-input-label for="response" :value="__('Response (Optional)')" />
+                                <textarea id="response" name="response" rows="3" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" placeholder="Enter any response or notes...">{{ old('response') }}</textarea>
+                                <x-input-error :messages="$errors->get('response')" class="mt-2 mobile-error" />
+                            </div>
+                        @endif
 
                         <!-- Prayer Date -->
                         <div class="mb-4 mobile-form-group">
@@ -277,12 +303,38 @@
     </div>
 
     <script>
-        // Add form ID for mobile submit button
+        // Add form ID for mobile submit button + enhance textarea with counter and templates
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.querySelector('form[action="{{ route('prayer-requests.store') }}"]');
             if (form) {
                 form.id = 'mobile-form';
             }
+
+            const textarea = document.getElementById('request');
+            const counter = document.getElementById('request-char-count');
+            const maxLen = parseInt(textarea.getAttribute('maxlength') || '1000', 10);
+
+            function updateCount() {
+                const length = textarea.value.length;
+                counter.textContent = `${length} / ${maxLen}`;
+                if (length > maxLen) counter.style.color = '#dc2626'; else counter.style.color = '#6b7280';
+            }
+
+            textarea.addEventListener('input', updateCount);
+            updateCount();
+
+            document.querySelectorAll('[data-prayer-template]').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const template = this.getAttribute('data-prayer-template') || '';
+                    if (!template) return;
+                    const current = textarea.value.trim();
+                    const separator = current ? (current.endsWith('.') ? '\n\n' : '\n\n') : '';
+                    const next = current ? (current + separator + template) : template;
+                    textarea.value = next.slice(0, maxLen);
+                    textarea.dispatchEvent(new Event('input'));
+                    textarea.focus();
+                });
+            });
         });
     </script>
 </x-app-layout>

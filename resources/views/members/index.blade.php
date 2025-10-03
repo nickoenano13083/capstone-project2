@@ -525,6 +525,69 @@
                 margin-bottom: 0.5rem;
             }
         }
+
+        /* Print styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+            }
+            
+            .print-header h1 {
+                margin: 0;
+                color: #333;
+            }
+            
+            .print-header p {
+                margin: 5px 0 0 0;
+                color: #666;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            
+            th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+            }
+            
+            th {
+                background-color: #f5f5f5;
+                font-weight: bold;
+            }
+            
+            .status-active {
+                color: #10b981;
+                font-weight: bold;
+            }
+            
+            .status-inactive {
+                color: #ef4444;
+                font-weight: bold;
+            }
+            
+            .status-pending {
+                color: #f59e0b;
+                font-weight: bold;
+            }
+            
+            .print-footer {
+                margin-top: 30px;
+                text-align: center;
+                font-size: 12px;
+                color: #666;
+            }
+        }
     </style>
     <script>
         function toggleView(view) {
@@ -555,22 +618,168 @@
             const savedView = localStorage.getItem('membersViewPreference') || 'table';
             toggleView(savedView);
         });
+
+        // Print functionality
+        function printMembers() {
+            // Get current filters to apply to print
+            const currentUrl = new URL(window.location);
+            const params = new URLSearchParams(currentUrl.search);
+            
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            
+            // Get the members table content
+            const membersTable = document.getElementById('members-table-view');
+            const membersGrid = document.getElementById('members-grid-view');
+            
+            let content = '';
+            if (membersTable && membersTable.style.display !== 'none') {
+                content = membersTable.innerHTML;
+            } else if (membersGrid && membersGrid.style.display !== 'none') {
+                content = membersGrid.innerHTML;
+            }
+            
+            // Create print content with ultra-compact layout for single page
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Members List - ${new Date().toLocaleDateString()}</title>
+                    <style>
+                        * { box-sizing: border-box; }
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 0; 
+                            padding: 10px; 
+                            font-size: 9px;
+                            line-height: 1.1;
+                        }
+                        .print-header { 
+                            text-align: center; 
+                            margin-bottom: 10px; 
+                            border-bottom: 1px solid #333; 
+                            padding-bottom: 5px; 
+                        }
+                        .print-header h1 { margin: 0; color: #333; font-size: 14px; }
+                        .print-header p { margin: 2px 0 0 0; color: #666; font-size: 9px; }
+                        table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-top: 8px;
+                            font-size: 8px;
+                        }
+                        th, td { 
+                            border: 0.5px solid #ccc; 
+                            padding: 2px 3px; 
+                            text-align: left; 
+                            vertical-align: top;
+                        }
+                        th { 
+                            background-color: #f5f5f5; 
+                            font-weight: bold; 
+                            font-size: 7px;
+                            text-transform: uppercase;
+                        }
+                        .status-active { color: #10b981; font-weight: bold; }
+                        .status-inactive { color: #ef4444; font-weight: bold; }
+                        .status-pending { color: #f59e0b; font-weight: bold; }
+                        .print-footer { 
+                            margin-top: 10px; 
+                            text-align: center; 
+                            font-size: 8px; 
+                            color: #666; 
+                        }
+                        .no-print { display: none !important; }
+                        .print-toolbar {
+                            position: fixed;
+                            top: 10px;
+                            right: 10px;
+                            z-index: 1000;
+                            background: white;
+                            padding: 8px;
+                            border: 1px solid #ccc;
+                            border-radius: 4px;
+                            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                        }
+                        .print-toolbar button {
+                            margin: 0 3px;
+                            padding: 6px 12px;
+                            border: none;
+                            border-radius: 3px;
+                            cursor: pointer;
+                            font-size: 10px;
+                        }
+                        .print-btn {
+                            background: #007bff;
+                            color: white;
+                        }
+                        .close-btn {
+                            background: #6c757d;
+                            color: white;
+                        }
+                        .print-btn:hover { background: #0056b3; }
+                        .close-btn:hover { background: #545b62; }
+                        @media print {
+                            .print-toolbar { display: none !important; }
+                            body { margin: 0; padding: 5px; font-size: 8px; }
+                            table { font-size: 7px; }
+                            th, td { padding: 1px 2px; }
+                            .print-header h1 { font-size: 12px; }
+                            .print-header p { font-size: 8px; }
+                            .print-footer { font-size: 7px; }
+                        }
+                        @page {
+                            margin: 0.5in;
+                            size: A4 landscape;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-toolbar">
+                        <button class="print-btn" onclick="window.print()">Print</button>
+                        <button class="close-btn" onclick="window.close()">Close</button>
+                    </div>
+                    <div class="print-header">
+                        <h1>Church Members List</h1>
+                        <p>Generated on ${new Date().toLocaleString()}</p>
+                        <p>Total Members: ${document.querySelectorAll('.member-row-active, .member-row-inactive, .member-row-pending').length}</p>
+                    </div>
+                    ${content}
+                    <div class="print-footer">
+                        <p>This document was generated from the Church Management System</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+        }
     </script>
     <div class="py-6">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                    <!-- Header and Search Bar -->
-                    <div class="flex flex-col space-y-4 mb-6">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between">
-                            <h2 class="text-2xl font-bold text-gray-800">Members Management</h2>
-                            <button id="headerFiltersToggle" class="mt-2 md:mt-0 flex items-center text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
-                                <span>Filters</span>
+                <div class="p-6 border-b border-gray-200">
+                    <x-page-header :icon="'fas fa-users'" title="Member Management" subtitle="Manage your church's members, filter by status, chapter, and more">
+                        <div class="flex space-x-3">
+                            <button onclick="printMembers()" 
+                                    class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                                <i class="fas fa-print mr-2"></i>
+                                Print
                             </button>
+                            <a href="{{ route('members.download') }}" 
+                               class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                <i class="fas fa-download mr-2"></i>
+                                Download
+                            </a>
                         </div>
+                    </x-page-header>
+                    <!-- Header and Search Bar -->
+                    <div class="flex flex-col space-y-4 mb-6 no-print">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between">
+                
+                            
 
                         <form action="{{ route('members.index') }}" method="GET" id="searchForm" class="relative w-full">
                             <div class="relative flex w-full">
@@ -664,7 +873,7 @@
                     @endif
 
                     <!-- Filters Toggle -->
-                    <div class="mb-6">
+                    <div class="mb-6 no-print">
                         <button id="filtersToggle" 
                                 class="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 focus:outline-none">
                             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -758,7 +967,7 @@
                     </div>
 
                     <!-- Tabs for Active/Archived Members -->
-                    <div class="flex border-b border-gray-200 mb-6">
+                    <div class="flex border-b border-gray-200 mb-6 no-print">
                         <button type="button" 
                                 class="tab-button py-4 px-6 text-center border-b-2 font-medium text-sm {{ !request('show_archived') ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}"
                                 data-tab="active">
@@ -772,7 +981,7 @@
                     </div>
 
                     <!-- Members Count and View Toggle -->
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 no-print">
                         <p class="text-sm text-gray-600 mb-2 sm:mb-0">
                             Showing <span class="font-medium">{{ $members->firstItem() }}</span> to 
                             <span class="font-medium">{{ $members->lastItem() }}</span> of 
@@ -814,7 +1023,7 @@
                                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                     Status
                                                 </th>
-                                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider no-print">
                                                     Actions
                                                 </th>
                                             </tr>
@@ -825,8 +1034,8 @@
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <div class="flex items-center">
                                                         <div class="flex-shrink-0">
-                                                            @if($member->profile_photo_path)
-                                                                <img class="h-10 w-10 rounded-full" src="{{ asset('storage/' . $member->profile_photo_path) }}" alt="{{ $member->name }}">
+                                                            @if($member->user && $member->user->profile_photo_path)
+                                                                <img class="h-10 w-10 rounded-full" src="{{ $member->user->profile_photo_url }}" alt="{{ $member->name }}">
                                                             @else
                                                                 <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                                                                     <span class="text-gray-600 text-lg font-semibold">{{ strtoupper(substr($member->name, 0, 1)) }}</span>
@@ -901,7 +1110,7 @@
                                                         </span>
                                                     @endif
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium no-print">
                                                     <div class="flex items-center justify-end space-x-2">
                                                         <a href="{{ route('members.show', $member) }}" 
                                                            class="text-white bg-blue-500 hover:bg-blue-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
@@ -981,9 +1190,13 @@
                             <div class="p-4 flex-1">
                                 <div class="flex items-center space-x-4 mb-4">
                                     <div class="flex-shrink-0">
-                                        <div class="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
-                                            {{ substr($member->first_name, 0, 1) }}{{ substr($member->last_name, 0, 1) }}
-                                        </div>
+                                        @if($member->user && $member->user->profile_photo_path)
+                                            <img class="h-12 w-12 rounded-full object-cover" src="{{ $member->user->profile_photo_url }}" alt="{{ $member->name }}">
+                                        @else
+                                            <div class="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                                                {{ strtoupper(substr($member->name, 0, 1)) }}
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-sm font-medium text-gray-900">{{ $member->name }}</p>

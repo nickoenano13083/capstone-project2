@@ -8,6 +8,7 @@
         body {
             background: #f3f6fb;
             font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            overflow-x: hidden; /* prevent horizontal scroll */
         }
         #leaflet-map {
             width: 100%;
@@ -20,6 +21,7 @@
             overflow: hidden;
             position: relative;
             z-index: 1;
+            box-sizing: border-box; /* include border in width to avoid overflow */
         }
         .search-container {
             background: transparent;
@@ -423,6 +425,77 @@
             margin: 0 0.25rem;
         }
 
+        /* Chapter label markers */
+        .chapter-label {
+            pointer-events: none;
+        }
+        .chapter-label-badge {
+            pointer-events: auto;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+            box-shadow: 0 6px 14px rgba(124, 58, 237, 0.25);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .chapter-label-badge:hover {
+            filter: brightness(1.05);
+        }
+
+        /* Header Action Buttons */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            border-radius: 9999px;
+            border: none;
+            background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+            color: #fff;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 8px 16px rgba(67, 56, 202, 0.15);
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 22px rgba(67, 56, 202, 0.25);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35), 0 8px 16px rgba(67, 56, 202, 0.15);
+        }
+
+        .action-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding: 0.55rem 2.25rem 0.55rem 0.9rem;
+            border-radius: 9999px;
+            border: 1px solid #c7d2fe;
+            color: #3730a3;
+            background: #fff url('data:image/svg+xml;utf8,<svg fill="%236366f1" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center / 16px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .action-select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .filter-group {
@@ -698,8 +771,8 @@
         @media (max-width: 768px) {
             /* Mobile Map Container */
             #leaflet-map {
-                height: calc(100vh - 280px); /* Adjust for mobile header and controls */
-                min-height: 400px;
+                height: calc(100vh - 220px); /* tighter to fit header & filters */
+                min-height: 360px;
                 border-width: 4px;
                 border-radius: 8px;
                 margin-top: 4px;
@@ -707,6 +780,7 @@
 
             /* Mobile Features Bar */
             .features-bar {
+                position: static; /* prevent overlaying app header */
                 flex-direction: column;
                 gap: 12px;
                 padding: 12px 8px;
@@ -745,11 +819,17 @@
 
             /* Mobile Controls Container */
             .mobile-controls {
-                display: flex;
+                display: none; /* hide header controls on mobile; we'll use FABs */
                 gap: 8px;
                 width: 100%;
                 justify-content: center;
                 align-items: center;
+            }
+
+            /* Remove fixed left margins for header controls on mobile */
+            .mobile-controls > .ml-6,
+            .mobile-controls .ml-6 {
+                margin-left: 0 !important;
             }
 
             #find-me-btn {
@@ -787,6 +867,9 @@
 
             /* Mobile Search Container */
             .search-container {
+                position: sticky;
+                top: 56px; /* below app header */
+                z-index: 20; /* below app header */
                 width: 100%;
                 max-width: 100%;
                 padding: 0 8px;
@@ -1034,6 +1117,38 @@
             }
         }
 
+        /* Mobile FABs for map actions */
+        @media (max-width: 768px) {
+            .mobile-fabs {
+                position: fixed;
+                right: 16px;
+                bottom: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                z-index: 1003;
+            }
+            .mobile-fabs button {
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                border: none;
+                color: #fff;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 22px;
+            }
+            #fab-find-me {
+                background: linear-gradient(135deg, #3b82f6, #6366f1);
+            }
+            #fab-theme {
+                background: linear-gradient(135deg, #0ea5e9, #22d3ee);
+            }
+        }
+
         /* Small Mobile Devices (320px - 375px) */
         @media (max-width: 375px) {
             .features-bar {
@@ -1244,91 +1359,102 @@
         }
     </style>
     <div class="flex flex-col min-h-screen">
-        <!-- Interactive Features Bar -->
-        <div class="features-bar">
-            <!-- Filter Buttons Group -->
-            <div class="filter-group">
-                <button class="filter-btn" data-filter="all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
-                    All
-                </button>
-                
-                <button class="filter-btn" data-filter="towns">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Towns
-                </button>
-                
-                <button class="filter-btn" data-filter="events">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Events
-                </button>
-                
-                <button class="filter-btn" data-filter="chapters">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    Chapters
-                </button>
-            </div>
-            
-            <!-- Geolocation Button -->
-            <button id="find-me-btn" class="ml-6 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-500 text-black font-medium shadow hover:from-indigo-500 hover:to-blue-400 transition flex items-center">
-                <span style="font-size:1.2em;">📍</span>
-                <span class="ml-2">Find My Location</span>
-            </button>
-            <!-- Map Theme Switcher -->
-            <div class="ml-6">
-                <select id="map-theme-switcher" class="rounded-lg border border-indigo-200 px-10 py-2 text-indigo-700 bg-white shadow focus:outline-none">
-                    <option value="standard">🗺️ Standard</option>
-                    <option value="dark">🌙 Dark</option>
-                    <option value="satellite">🛰️ Satellite</option>
-                </select>
-            </div>
-            <!-- Help Tooltip -->
-            <div class="ml-6 relative group">
-                <button class="rounded-full bg-gray-200 text-gray-700 px-3 py-2 font-bold text-lg shadow" style="width:40px;height:40px;">?</button>
-                <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-sm text-gray-700 z-50 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200">
-                    <b>How to use the map:</b><br>
-                    - Search for a town/city<br>
-                    - Click markers for info<br>
-                    - Use the theme switcher<br>
-                    - Find your location<br>
-                    - Use filters to show/hide types
-                </div>
-            </div>
-        </div>
-        <div class="search-container">
-            <div class="search-bar-wrapper">
-                <div class="search-input-group">
-                    <input 
-                        type="text" 
-                        id="map-search" 
-                        placeholder="Search for locations, churches, or addresses..."
-                        autocomplete="off"
-                        aria-label="Search locations"
-                    >
-                    <div class="search-buttons">
-                        <button id="clear-search-btn" title="Clear search">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        <button id="map-search-btn" title="Search">
-                            <i class="fas fa-search"></i>
-                        </button>
+        <!-- Map Header aligned like dashboard header -->
+        <style>
+            .map-header { display:flex; justify-content:flex-start; align-items:center; background:#fff; padding:16px 24px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05); margin:12px auto 10px auto; gap:20px; width:100%; max-width:100vw; position:relative; z-index:1; box-sizing:border-box; }
+            .map-header h1 { font-size:20px; font-weight:600; color:#333; }
+            .map-search-bar { flex-grow:2; max-width:800px; min-width:300px; margin-left:10px; }
+            .map-header-actions { display:flex; align-items:center; gap:12px; margin-left:auto; flex-wrap:nowrap; }
+            @media (max-width:768px){
+                html, body { overflow-x:hidden; width:100%; max-width:100vw; }
+                .map-header{ padding:12px 12px 12px 56px; gap:8px; max-width:100vw; box-sizing:border-box; flex-direction: column; align-items: stretch; }
+                .map-header h1{ display:none; }
+                .map-search-bar{ order:2; width:100%!important; max-width:100%!important; min-width:auto!important; margin-left:0!important; }
+                .map-header-actions{ order:3; gap:6px; flex-wrap: nowrap; width:100%; justify-content:flex-start; overflow-x:auto; -webkit-overflow-scrolling: touch; }
+                .map-header-actions::-webkit-scrollbar{ display:none; }
+                .map-header-actions .filter-group{ flex: 0 0 auto; width:auto; overflow-x:auto; white-space:nowrap; padding:4px 0; -webkit-overflow-scrolling: touch; }
+                .map-header-actions .filter-btn{ padding:8px 10px; font-size:12px; }
+                #map-theme-switcher.action-select{ flex:0 0 auto; }
+                #find-me-btn.action-btn{ flex:0 0 auto; }
+            }
+            @media (max-width:480px){
+                .map-header .action-btn .ml-1{ display:none; }
+                .map-header .action-btn{ padding:10px 12px; min-width:44px; min-height:40px; }
+                .map-header .action-select{ padding:6px 28px 6px 10px; font-size:12px; }
+            }
+        </style>
+        <header class="map-header">
+            <h1>Map</h1>
+            <div class="map-search-bar">
+                <div class="search-bar-wrapper">
+                    <div class="search-input-group">
+                        <input 
+                            type="text" 
+                            id="map-search" 
+                            placeholder="Search for locations, churches, or addresses..."
+                            autocomplete="off"
+                            aria-label="Search locations"
+                        >
+                        <div class="search-buttons">
+                            <button id="clear-search-btn" title="Clear search">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button id="map-search-btn" title="Search">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="search-suggestions" id="search-suggestions">
+                        <div class="search-loading" id="search-loading">Searching...</div>
+                        <div id="suggestions-container"></div>
                     </div>
                 </div>
-                <div class="search-suggestions" id="search-suggestions">
-                    <div class="search-loading" id="search-loading">Searching...</div>
-                    <div id="suggestions-container"></div>
+            </div>
+            <div class="map-header-actions">
+                <div class="filter-group" style="margin-right:8px;">
+                    <button class="filter-btn" data-filter="all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                        All
+                    </button>
+                    <button class="filter-btn" data-filter="towns">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Towns
+                    </button>
+                    <button class="filter-btn" data-filter="chapters">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        Chapters
+                    </button>
+                </div>
+                <button id="find-me-btn" class="action-btn" title="Find my location" aria-label="Find my location"><span style="font-size:1.2em;">📍</span><span class="ml-1">Find My Location</span></button>
+                <select id="map-theme-switcher" class="action-select" title="Map theme" aria-label="Map theme">
+                    <option value="standard">🗺️ Standard</option>
+                </select>
+                <div class="relative group">
+                    <button class="action-btn" style="width:40px;height:40px;padding:0;" title="Help" aria-label="Help" tabindex="0">?</button>
+                    <div class="absolute left-1/2 -translate-x-1/2 mt-2 w-64 bg-white border border-gray-300 rounded-lg shadow-lg p-4 text-sm text-gray-700 z-50 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-200">
+                        <b>How to use the map:</b><br>
+                        - Search for a town/city<br>
+                        - Click markers for info<br>
+                        - Use the theme switcher<br>
+                        - Find your location<br>
+                        - Use filters to show/hide types
+                    </div>
                 </div>
             </div>
+        </header>
+        <!-- Interactive Features Bar -->
+        <div class="features-bar">
+            <!-- Filter buttons relocated to header -->
+            <!-- Header action buttons removed from features bar to avoid duplication -->
         </div>
+        <!-- Removed duplicate search container; search is now in the header -->
         <div class="flex-1" style="position:relative;">
             <div id="leaflet-map"></div>
             
@@ -1355,12 +1481,6 @@
                         <span class="legend-label">Town/City</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-marker event">
-                            <div class="pulse"></div>
-                        </div>
-                        <span class="legend-label">Event</span>
-                    </div>
-                    <div class="legend-item">
                         <div class="legend-marker chapter">
                             <div class="pulse"></div>
                         </div>
@@ -1373,6 +1493,12 @@
                         <span class="legend-label">Your Location</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Mobile Floating Action Buttons -->
+            <div class="mobile-fabs" aria-hidden="true">
+                <button id="fab-find-me" title="Find my location" aria-label="Find my location">📍</button>
+                <button id="fab-theme" title="Change map theme" aria-label="Change map theme">🗺️</button>
             </div>
         </div>
     </div>
@@ -1420,22 +1546,15 @@
                     attribution: ' OpenStreetMap',
                     className: window.innerWidth <= 768 ? 'mobile-tile-layer' : ''
                 }),
-                dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                    maxZoom: 19,
-                    attribution: ' OpenStreetMap,  CartoDB',
-                    className: window.innerWidth <= 768 ? 'mobile-tile-layer' : ''
-                }),
-                satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                    maxZoom: 19,
-                    attribution: 'Tiles  Esri',
-                    className: window.innerWidth <= 768 ? 'mobile-tile-layer' : ''
-                })
+                
             };
             tileLayers.standard.addTo(map);
             var currentBaseLayer = tileLayers.standard;
 
-            // Enhanced map theme switcher for mobile
+            // Enhanced map theme switcher for mobile (standard only)
             var themeSwitcher = document.getElementById('map-theme-switcher');
+            var fabFindMe = document.getElementById('fab-find-me');
+            var fabTheme = document.getElementById('fab-theme');
             if (themeSwitcher) {
                 // Add touch feedback
                 themeSwitcher.addEventListener('touchstart', function(e) {
@@ -1447,31 +1566,41 @@
                 }, { passive: true });
                 
                 themeSwitcher.addEventListener('change', function() {
-                    var selected = this.value;
-                    if (tileLayers[selected] && tileLayers[selected] !== currentBaseLayer) {
-                        // Add loading state for mobile
-                        if (window.innerWidth <= 768) {
-                            this.style.opacity = '0.7';
-                            this.disabled = true;
-                            
-                            setTimeout(() => {
-                                this.style.opacity = '1';
-                                this.disabled = false;
-                            }, 1000);
-                        }
-                        
+                    // Only standard is available; ensure standard stays active
+                    if (this.value !== 'standard') {
+                        this.value = 'standard';
+                    }
+                    if (currentBaseLayer !== tileLayers.standard) {
                         map.removeLayer(currentBaseLayer);
-                        tileLayers[selected].addTo(map);
-                        currentBaseLayer = tileLayers[selected];
-                        
-                        // Adjust map view for mobile after theme change
-                        if (window.innerWidth <= 768) {
-                            setTimeout(() => {
-                                map.invalidateSize();
-                                var center = map.getCenter();
-                                map.setView(center, map.getZoom(), { animate: false });
-                            }, 100);
-                        }
+                        tileLayers.standard.addTo(map);
+                        currentBaseLayer = tileLayers.standard;
+                    }
+                });
+            }
+
+            // Mobile FAB: Find Me triggers the same logic as the header button
+            if (fabFindMe && findMeBtn) {
+                fabFindMe.addEventListener('click', function() {
+                    findMeBtn.click();
+                });
+            }
+
+            // Mobile FAB: Cycle map theme (standard -> dark -> satellite -> standard)
+            if (fabTheme) {
+                var order = ['standard', 'dark', 'satellite'];
+                fabTheme.addEventListener('click', function() {
+                    var keys = Object.keys(tileLayers);
+                    var currentKey = keys.find(function(k){ return tileLayers[k] === currentBaseLayer; }) || 'standard';
+                    var idx = order.indexOf(currentKey);
+                    var next = order[(idx + 1) % order.length];
+                    if (themeSwitcher) {
+                        themeSwitcher.value = next;
+                        var evt = new Event('change');
+                        themeSwitcher.dispatchEvent(evt);
+                    } else {
+                        map.removeLayer(currentBaseLayer);
+                        tileLayers[next].addTo(map);
+                        currentBaseLayer = tileLayers[next];
                     }
                 });
             }
@@ -1570,15 +1699,21 @@
                         if (layer instanceof L.Marker) {
                             var icon = layer.getIcon();
                             if (icon) {
-                                // Create larger icon for mobile
-                                var mobileIcon = L.divIcon({
-                                    className: icon.options.className + ' mobile-marker',
-                                    iconSize: [32, 32], // Larger for mobile
-                                    iconAnchor: [16, 32],
-                                    popupAnchor: [0, -32],
-                                    html: icon.options.html
-                                });
-                                layer.setIcon(mobileIcon);
+                                // If the marker uses a divIcon with HTML, upscale it safely.
+                                var isDivIcon = typeof icon.options.html !== 'undefined';
+                                if (isDivIcon && icon.options.html) {
+                                    var mobileIcon = L.divIcon({
+                                        className: (icon.options.className || '') + ' mobile-marker',
+                                        iconSize: [32, 32],
+                                        iconAnchor: [16, 32],
+                                        popupAnchor: [0, -32],
+                                        html: icon.options.html || ''
+                                    });
+                                    layer.setIcon(mobileIcon);
+                                } else {
+                                    // Leave default/image markers untouched to avoid broken icons/text
+                                    return;
+                                }
                             }
                         }
                     });
@@ -1590,18 +1725,18 @@
             
             // Array of locations: [lat, lng, name, description, address, population, attractions, history]
             var locations = [
-                [12.9941421, 124.0101508, 'Jesus Is Lord Sorsogon City',
+                [12.994886, 124.0087088, 'Jesus Is Lord Sorsogon City',
                     `<img src='{{ asset('jil-sorsogon-dark.png') }}' style='width:100px;display:block;margin-bottom:5px;'>Jesus Is Lord Sorsogon City<br>X2V5+XGG, Sorsogon Diversion Rd, Sorsogon City, 4700 Sorsogon<br><a href='https://www.google.com/maps/place/Jesus+Is+Lord+Church/@12.9941421,124.0101508,496m/data=!3m1!1e3!4m6!3m5!1s0x33a0efaf85eca82b:0x7fb846fffc665d98!8m2!3d12.9949433!4d124.0088341!16s%2Fg%2F11smqkrt15?entry=ttu&g_ep=EgoyMDI1MDkwOC4wIKXMDSoASAFQAw%3D%3D' target='_blank'>View on Google Maps</a>`,
                     'Sorsogon, Bicol',
                     'Founded in 1894, became a city in 2000. Named after the Sorsogon tree.'],
-                [12.890755, 124.1039699, 'Jesus Is Lord Gubat',
+                [12.8906913,124.1058797, 'Jesus Is Lord Gubat',
                 `<img src='{{ asset('jil-sorsogon-dark.png') }}' style='width:100px;display:block;margin-bottom:5px;'>Capital of Sorsogon province, gateway to Southern Luzon.<br><a href='https://en.wikipedia.org/wiki/Sorsogon_City' target='_blank'>More info</a>`,
                     'Known for its beautiful beaches and surfing spots.',
                     'Gubat, Sorsogon, Bicol',
                     'Population: ~59,000',
                     ' Rizal Beach (surfing),  Buenavista Beach,  Gubat Municipal Hall,  St. Anthony of Padua Church',
                     'Founded in 1764. "Gubat" means forest in Bicolano. Famous for surfing competitions.'],
-                [12.6676533, 123.8810082, 'Jesus Is Lord Bulan',
+                [12.667768, 123.880826, 'Jesus Is Lord Bulan',
                 `<img src='{{ asset('jil-sorsogon-dark.png') }}' style='width:100px;display:block;margin-bottom:5px;'>Capital of Sorsogon province, gateway to Southern Luzon.<br><a href='https://en.wikipedia.org/wiki/Sorsogon_City' target='_blank'>More info</a>`,
                     'A coastal municipality and commercial hub in southwestern Sorsogon.',
                     'Bulan, Sorsogon, Bicol',
@@ -1633,7 +1768,7 @@
 
             // --- Marker group setup for filters ---
             var townsLayer = L.layerGroup();
-            // Placeholder for future: eventsLayer, chaptersLayer
+            var chaptersLayer = L.layerGroup();
             var markerRefs = {};
             var locationNames = locations.map(function(loc) { return loc[2]; });
             locations.forEach(function(loc, idx) {
@@ -1681,9 +1816,27 @@
             });
             townsLayer.addTo(map);
 
+            // Build chapters layer: labeled markers showing chapter name; clicking computes route
+            locations.forEach(function(loc) {
+                var lat = loc[0], lng = loc[1];
+                var labelHtml = '<div class="chapter-label"><span class="chapter-label-badge">' + (loc[2] || 'Chapter') + '</span></div>';
+                var labelIcon = L.divIcon({
+                    className: 'chapter-label',
+                    html: labelHtml,
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0]
+                });
+                var labelMarker = L.marker([lat, lng], { icon: labelIcon });
+                labelMarker.on('click', function() {
+                    computeRouteToDestination(lat, lng);
+                });
+                chaptersLayer.addLayer(labelMarker);
+            });
+
             // --- Layer control (for future extensibility) ---
             var overlayMaps = {
-                "Towns/Cities": townsLayer
+                "Towns/Cities": townsLayer,
+                "Chapters": chaptersLayer
             };
             L.control.layers(null, overlayMaps, {collapsed: false, position: 'topright'}).addTo(map);
 
@@ -1788,6 +1941,112 @@
             var userLocation = null;
             var userMarker = null;
             var routingControl = null;
+
+            // Start a route from current device location to a destination
+            function computeRouteToDestination(destLat, destLng) {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+
+                // Clear any existing user location marker
+                if (window.userLocationMarker) {
+                    map.removeLayer(window.userLocationMarker);
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        userLocation = [position.coords.latitude, position.coords.longitude];
+
+                        // Remove previous route if any
+                        if (routingControl) {
+                            map.removeControl(routingControl);
+                        }
+
+                        // Ensure a marker for user's current location (distinct from window.userLocationMarker used elsewhere)
+                        if (!userMarker) {
+                            userMarker = L.marker(
+                                [position.coords.latitude, position.coords.longitude],
+                                {
+                                    icon: L.icon({
+                                        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                                        iconSize: [30, 48],
+                                        iconAnchor: [15, 48],
+                                        className: 'user-location-marker'
+                                    })
+                                }
+                            ).addTo(map);
+                        } else {
+                            userMarker.setLatLng([position.coords.latitude, position.coords.longitude]);
+                        }
+
+                        // Create route
+                        routingControl = L.Routing.control({
+                            waypoints: [
+                                L.latLng(position.coords.latitude, position.coords.longitude),
+                                L.latLng(destLat, destLng)
+                            ],
+                            routeWhileDragging: false,
+                            draggableWaypoints: false,
+                            addWaypoints: false,
+                            show: true,
+                            collapsible: true,
+                            createMarker: function(i, wp, nWps) {
+                                if (i === 0) {
+                                    return L.marker(wp.latLng, {
+                                        icon: L.icon({
+                                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                                            iconSize: [30, 48],
+                                            iconAnchor: [15, 48],
+                                            className: 'user-location-marker'
+                                        })
+                                    });
+                                } else {
+                                    return L.marker(wp.latLng);
+                                }
+                            },
+                            lineOptions: {
+                                styles: [{color: '#6366f1', weight: 6, opacity: 0.85}]
+                            },
+                            altLineOptions: {
+                                styles: [{color: '#818cf8', weight: 4, opacity: 0.5, dashArray: '8,12'}]
+                            },
+                            language: 'en',
+                            showAlternatives: false
+                        }).addTo(map);
+
+                        routingControl.on('routesfound', function(e) {
+                            var route = e.routes && e.routes[0];
+                            if (route && route.bounds) {
+                                map.fitBounds(route.bounds, {padding: [40, 40]});
+                            }
+                        });
+
+                        routingControl.on('routingerror', function() {
+                            alert('Could not calculate route. Please try again.');
+                        });
+                    },
+                    function(error) {
+                        var errorMessage = 'Could not get your location. ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += 'Please enable location services and try again.'; break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += 'Location information is unavailable.'; break;
+                            case error.TIMEOUT:
+                                errorMessage += 'The request to get your location timed out.'; break;
+                            default:
+                                errorMessage += 'An unknown error occurred.'; break;
+                        }
+                        alert(errorMessage);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            }
 
             // --- Geolocation logic (enhanced) ---
             if (findMeBtn) {
@@ -2055,16 +2314,12 @@
                     setActiveFilter(btn);
                     // Remove all marker groups
                     map.removeLayer(townsLayer);
-                    // map.removeLayer(eventsLayer); // future
-                    // map.removeLayer(chaptersLayer); // future
+                    map.removeLayer(chaptersLayer);
                     if (label === 'All' || label === 'Towns') {
                         townsLayer.addTo(map);
+                    } else if (label === 'Chapters') {
+                        chaptersLayer.addTo(map);
                     }
-                    // else if (label === 'Events') {
-                    //     eventsLayer.addTo(map);
-                    // } else if (label === 'Chapters') {
-                    //     chaptersLayer.addTo(map);
-                    // }
                 });
             });
             // Set default filter

@@ -109,15 +109,59 @@
 
     <div class="dashboard-main-content p-6">
         <!-- Header Section -->
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Chapters</h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-1">Manage and organize your organization's chapters</p>
+        <x-page-header :icon="'fas fa-project-diagram'" title="Chapters" subtitle="Manage and organize your organization's chapters">
+            <div class="flex items-center justify-between gap-4 flex-wrap">
+                <a href="{{ route('chapters.create') }}" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i> Add New Chapter
+                </a>
             </div>
-            <a href="{{ route('chapters.create') }}" class="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm transition-colors duration-200">
-                <i class="fas fa-plus mr-2"></i> Add New Chapter
-            </a>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                <div class="stat-card p-4">
+                    <div class="flex items-center">
+                        <div class="stat-icon mr-3">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Total Chapters</p>
+                            <h3 class="text-2xl font-bold">{{ $chapters->total() }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-4">
+                    <div class="flex items-center">
+                        <div class="stat-icon mr-3">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Active Chapters</p>
+                            <h3 class="text-2xl font-bold">{{ $chapters->where('status', 'active')->count() }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-4">
+                    <div class="flex items-center">
+                        <div class="stat-icon mr-3">
+                            <i class="fas fa-person-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Admins</p>
+                            <h3 class="text-2xl font-bold">{{ $chapters->whereNotNull('leader_id')->count() }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card p-4">
+                    <div class="flex items-center">
+                        <div class="stat-icon mr-3">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Need Leaders</p>
+                            <h3 class="text-2xl font-bold">{{ $chapters->whereNull('leader_id')->count() }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </x-page-header>
 
         @if(session('success'))
             <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r">
@@ -137,60 +181,7 @@
             </div>
         @endif
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <!-- Total Chapters -->
-            <div class="stat-card p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon mr-4">
-                        <i class="fas fa-project-diagram"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Total Chapters</p>
-                        <h3 class="text-2xl font-bold">{{ $chapters->total() }}</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Chapters -->
-            <div class="stat-card p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon mr-4">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Active Chapters</p>
-                        <h3 class="text-2xl font-bold">{{ $chapters->where('status', 'active')->count() }}</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- With Leaders -->
-            <div class="stat-card p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon mr-4">
-                        <i class="fas fa-person-check"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">With Leaders</p>
-                        <h3 class="text-2xl font-bold">{{ $chapters->whereNotNull('leader_id')->count() }}</h3>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Need Leaders -->
-            <div class="stat-card p-5">
-                <div class="flex items-center">
-                    <div class="stat-icon mr-4">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Need Leaders</p>
-                        <h3 class="text-2xl font-bold">{{ $chapters->whereNull('leader_id')->count() }}</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Statistics moved into header above -->
 
         <div class="main-content-card overflow-hidden">
             <div class="card-header">
@@ -218,7 +209,7 @@
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chapter</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Leader</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Members</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -242,18 +233,34 @@
                                     <div class="text-sm text-gray-900">{{ $chapter->location ?? 'N/A' }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($chapter->leader)
+                                    @php
+                                        $adminUser = null;
+                                        if ($chapter->leader) {
+                                            // If leader is a User
+                                            if ($chapter->leader instanceof \App\Models\User) {
+                                                $adminUser = $chapter->leader;
+                                            } elseif (method_exists($chapter->leader, 'user')) {
+                                                // If leader is a Member with an associated User
+                                                $adminUser = $chapter->leader->user;
+                                            }
+                                        }
+                                    @endphp
+                                    @if($adminUser)
                                         <div class="flex items-center">
-                                            <div class="chapter-leader-avatar mr-3">
-                                                {{ strtoupper(substr($chapter->leader->name, 0, 1)) }}
-                                            </div>
+                                            @if(!empty($adminUser->profile_photo_url))
+                                                <img src="{{ $adminUser->profile_photo_url }}" alt="{{ $adminUser->name }}" class="w-9 h-9 rounded-full object-cover mr-3">
+                                            @else
+                                                <div class="chapter-leader-avatar mr-3">
+                                                    {{ strtoupper(substr($adminUser->name, 0, 1)) }}
+                                                </div>
+                                            @endif
                                             <div>
-                                                <div class="text-sm font-medium text-gray-900">{{ $chapter->leader->name }}</div>
-                                                <div class="text-xs text-gray-500">{{ $chapter->leader->email }}</div>
+                                                <div class="text-sm font-medium text-gray-900">{{ $adminUser->name }}</div>
+                                                <div class="text-xs text-gray-500">{{ $adminUser->email }}</div>
                                             </div>
                                         </div>
                                     @else
-                                        <span class="text-sm text-gray-500">No leader assigned</span>
+                                        <span class="text-sm text-gray-500">No admin assigned</span>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -262,31 +269,15 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($chapter->is_active)
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Active
-                                        </span>
-                                    @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                            Inactive
-                                        </span>
-                                    @endif
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        Active
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <a href="{{ route('chapters.show', $chapter) }}" class="action-btn text-indigo-600 hover:text-indigo-900" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{{ route('chapters.edit', $chapter) }}" class="action-btn text-blue-600 hover:text-blue-900" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('chapters.destroy', $chapter) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this chapter?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="action-btn text-red-600 hover:text-red-900" title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
                                     </div>
                                 </td>
                             </tr>

@@ -125,21 +125,16 @@ class ProfileController extends Controller
             
             \Log::info('Processing new profile picture', ['filename' => $filename]);
             
-            // Ensure the directory exists
-            if (!Storage::disk('public')->exists('profile-photos')) {
-                Storage::disk('public')->makeDirectory('profile-photos');
-            }
+            // Store the file on the public disk so it's web-accessible via /storage
+            $stored = Storage::disk('public')->putFileAs('profile-photos', $image, basename($filename));
             
-            // Store the file
-            $path = $image->storeAs('public/profile-photos', basename($filename));
-            
-            // Get the relative path (without 'public/' prefix)
-            $relativePath = str_replace('public/', '', $path);
+            // The stored path is already relative to the public disk root
+            $relativePath = $stored; // e.g. 'profile-photos/uuid.ext'
             
             \Log::info('Profile picture saved', [
-                'full_path' => storage_path('app/' . $path),
+                'full_path' => storage_path('app/public/' . $relativePath),
                 'public_path' => public_path('storage/' . $relativePath),
-                'url' => Storage::url($relativePath)
+                'url' => Storage::disk('public')->url($relativePath)
             ]);
 
             // Update user's profile photo path

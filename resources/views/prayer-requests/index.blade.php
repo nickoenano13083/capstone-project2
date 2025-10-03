@@ -394,27 +394,20 @@
     <div class="py-6">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg glass-card">
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
-                    <!-- Header and Search Bar -->
-                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
-                        <h2 class="text-2xl font-semibold text-gray-800 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                            </svg>
-                            {{ __('Prayer Requests') }}
-                            @if(auth()->user()->role === 'Member')
-                                <span class="ml-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">My Requests</span>
-                            @endif
-                        </h2>
-                        
-                        <div class="mt-4 md:mt-0 flex flex-col sm:flex-row gap-3">
-                            <a href="{{ route('prayer-requests.create') }}" class="gradient-button text-white font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center">
+                <div class="p-6 border-b border-gray-200">
+                    <x-page-header :icon="'fas fa-hands-praying'" title="Prayer Requests" :subtitle="auth()->user()->role === 'Member' ? 'View and track your requests' : 'Manage and review prayer requests'">
+                        @if(auth()->user()->role === 'Member')
+                            <a href="{{ route('prayer-requests.create') }}" class="inline-flex items-center px-4 py-2 bg-white text-blue-600 text-sm font-medium rounded-lg shadow-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                                 </svg>
-                                {{ auth()->user()->role === 'Member' ? 'New Prayer Request' : 'Add Prayer Request' }}
+                                New Prayer Request
                             </a>
-                        </div>
+                        @endif
+                    </x-page-header>
+                    <!-- Header and Search Bar -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+                        
                     </div>
 
                     @if(session('success'))
@@ -519,16 +512,28 @@
                                 <select name="status" id="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     <option value="">All Statuses</option>
                                     <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                    <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-                                    <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    <option value="answered" {{ request('status') == 'answered' ? 'selected' : '' }}>Answered</option>
+                                </select>
+                            </div>
+
+                            <!-- Category Filter -->
+                            <div>
+                                <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select name="category" id="category" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="">All Categories</option>
+                                    <option value="healing" {{ request('category') == 'healing' ? 'selected' : '' }}>Healing</option>
+                                    <option value="family" {{ request('category') == 'family' ? 'selected' : '' }}>Family</option>
+                                    <option value="work_school" {{ request('category') == 'work_school' ? 'selected' : '' }}>Work/School</option>
+                                    <option value="deliverance" {{ request('category') == 'deliverance' ? 'selected' : '' }}>Deliverance</option>
+                                    <option value="church" {{ request('category') == 'church' ? 'selected' : '' }}>Church</option>
+                                    <option value="other" {{ request('category') == 'other' ? 'selected' : '' }}>Other</option>
                                 </select>
                             </div>
                             
                             <!-- Date Range Filter -->
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <select id="date_range" name="date_range" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         <option value="">All Time</option>
                                         <option value="today" {{ request('date_range') === 'today' ? 'selected' : '' }}>Today</option>
@@ -537,7 +542,12 @@
                                         <option value="this_year" {{ request('date_range') === 'this_year' ? 'selected' : '' }}>This Year</option>
                                     </select>
                                     
-                                    <div class="flex items-end space-x-3">
+                                    <label class="inline-flex items-center space-x-2">
+                                        <input type="checkbox" name="archived" value="1" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" {{ request('archived') ? 'checked' : '' }}>
+                                        <span class="text-sm text-gray-700">Include Archived</span>
+                                    </label>
+
+                                    <div class="flex items-center space-x-3">
                                         <button type="submit" 
                                                 class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium text-sm rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                             <i class="fas fa-filter mr-2"></i> Apply Filters
@@ -592,17 +602,6 @@
                             <span class="font-medium">{{ $prayerRequests->total() }}</span> prayer requests
                         </p>
                         
-                        <div class="flex items-center space-x-2">
-                            <span class="text-sm text-gray-600">View:</span>
-                            <div class="inline-flex rounded-md shadow-sm" role="group">
-                                <button type="button" id="tableViewBtn" class="px-3 py-1.5 text-sm font-medium rounded-l-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <i class="fas fa-table mr-1"></i> Table
-                                </button>
-                                <button type="button" id="gridViewBtn" class="px-3 py-1.5 text-sm font-medium rounded-r-lg border-t border-b border-r border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:z-10 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                    <i class="fas fa-th-large mr-1"></i> Grid
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Prayer Requests Table -->
@@ -631,6 +630,14 @@
                                                 Prayer Date
                                             </div>
                                         </th>
+                                        @if(auth()->user()->role !== 'Member')
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-tag mr-2"></i>
+                                                    Category
+                                                </div>
+                                            </th>
+                                        @endif
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             <div class="flex items-center">
                                                 <i class="fas fa-info-circle mr-2"></i>
@@ -701,25 +708,39 @@
                                                     {{ str_replace('_', ' ', ucfirst($request->status)) }}
                                                 </span>
                                             </td>
+                                            @if(auth()->user()->role !== 'Member')
+                                                <td class="px-6 py-4 whitespace-nowrap" data-label="Category">
+                                                    @php
+                                                        $categoryMap = [
+                                                            'healing' => ['Healing', 'bg-purple-100 text-purple-800'],
+                                                            'family' => ['Family', 'bg-pink-100 text-pink-800'],
+                                                            'work_school' => ['Work/School', 'bg-indigo-100 text-indigo-800'],
+                                                            'deliverance' => ['Deliverance', 'bg-red-100 text-red-800'],
+                                                            'church' => ['Church', 'bg-blue-100 text-blue-800'],
+                                                            'other' => ['Other', 'bg-gray-100 text-gray-800'],
+                                                        ];
+                                                        [$label, $classes] = $categoryMap[$request->category] ?? [($request->category ?? 'Uncategorized'), 'bg-gray-100 text-gray-800'];
+                                                    @endphp
+                                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $classes }}">
+                                                        {{ $label }}
+                                                    </span>
+                                                </td>
+                                            @endif
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" data-label="Actions">
                                                 <div class="flex items-center justify-end space-x-2">
                                                     <a href="{{ route('prayer-requests.show', $request) }}" class="text-indigo-600 hover:text-indigo-900 mr-3 action-button" data-tooltip="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
                                                     
-                                                    @if(auth()->user()->role !== 'Member')
-                                                        <a href="{{ route('prayer-requests.edit', $request) }}" class="text-yellow-600 hover:text-yellow-900 mr-3 action-button" data-tooltip="Edit">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        
-                                                        <form action="{{ route('prayer-requests.destroy', $request) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this prayer request?')">
+                                                    @can('delete', $request)
+                                                        <form action="{{ route('prayer-requests.destroy', $request) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to archive this prayer request?')">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="text-red-600 hover:text-red-900 action-button" data-tooltip="Delete">
-                                                                <i class="fas fa-trash-alt"></i>
+                                                            <button type="submit" class="text-red-600 hover:text-red-900 action-button" data-tooltip="Archive">
+                                                                <i class="fas fa-archive"></i>
                                                             </button>
                                                         </form>
-                                                    @endif
+                                                    @endcan
                                                 </div>
                                             </td>
                                         </tr>
@@ -731,10 +752,18 @@
                                                         <i class="fas fa-praying-hands text-2xl text-gray-400"></i>
                                                     </div>
                                                     <h3 class="text-lg font-medium text-gray-900 mb-1">No prayer requests found</h3>
-                                                    <p class="text-gray-500 mb-4">Get started by creating a new prayer request.</p>
-                                                    <a href="{{ route('prayer-requests.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
-                                                        <i class="fas fa-plus mr-2"></i> New Prayer Request
-                                                    </a>
+                                                    <p class="text-gray-500 mb-4">
+                                                        @if(auth()->user()->role === 'Member')
+                                                            Get started by creating a new prayer request.
+                                                        @else
+                                                            No prayer requests have been submitted yet.
+                                                        @endif
+                                                    </p>
+                                                    @if(auth()->user()->role === 'Member')
+                                                        <a href="{{ route('prayer-requests.create') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors">
+                                                            <i class="fas fa-plus mr-2"></i> New Prayer Request
+                                                        </a>
+                                                    @endif
                                                 </div>
                                             </td>
                                         </tr>
@@ -742,6 +771,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        
                         
                         <!-- Pagination -->
                         @if($prayerRequests->hasPages())
@@ -826,14 +856,11 @@
 
     @push('scripts')
     <script>
-        // Toggle between table and grid view
         document.addEventListener('DOMContentLoaded', function() {
-            const tableViewBtn = document.getElementById('tableViewBtn');
-            const gridViewBtn = document.getElementById('gridViewBtn');
-            const filtersPanel = document.getElementById('filtersPanel');
-            const filtersToggle = document.getElementById('filtersToggle');
             
             // Toggle filters panel
+            const filtersPanel = document.getElementById('filtersPanel');
+            const filtersToggle = document.getElementById('filtersToggle');
             if (filtersToggle) {
                 filtersToggle.addEventListener('click', function() {
                     filtersPanel.classList.toggle('hidden');

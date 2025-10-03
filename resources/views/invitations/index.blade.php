@@ -5,12 +5,11 @@
     <div class="w-full px-4 sm:px-6">
         <div class="bg-white shadow-sm rounded-lg">
             <div class="p-6">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <h2 class="text-2xl font-semibold text-gray-800">Invitation Codes</h2>
-                    <a href="{{ route('invitations.create') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 border border-blue-700 rounded-lg font-medium text-sm text-gray uppercase tracking-wider shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:-translate-y-0.5">
-                        <i class="fas fa-plus-circle mr-2 text-lg"></i> Generate New Code
+                <x-page-header :icon="'fas fa-key'" title="Invitation Codes" subtitle="Generate and manage invitation codes for new members">
+                    <a href="{{ route('invitations.create') }}" class="inline-flex items-center px-4 py-2 bg-white text-blue-600 text-sm font-medium rounded-lg shadow-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
+                        <i class="fas fa-plus-circle mr-2"></i> Generate New Code
                     </a>
-                </div>
+                </x-page-header>
 
                 @if (session('success'))
                     <div class="mb-4 px-4 py-2 bg-green-100 border border-green-200 text-green-700 rounded">

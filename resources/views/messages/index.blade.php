@@ -22,6 +22,70 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    /* Mobile-specific improvements */
+    @media (max-width: 768px) {
+        .messaging-container {
+            height: 100vh;
+            height: 100dvh; /* Dynamic viewport height for mobile browsers */
+        }
+        
+        .user-item {
+            padding: 1rem;
+            min-height: 60px;
+        }
+        
+        .user-item img, .user-item .rounded-full {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .user-item h6 {
+            font-size: 1rem;
+        }
+        
+        .user-item p {
+            font-size: 0.875rem;
+        }
+        
+        /* Improve touch targets */
+        button, .user-item, input {
+            min-height: 44px;
+        }
+        
+        /* Better message spacing on mobile */
+        #messages-container {
+            padding-bottom: 1rem;
+        }
+        
+        /* Mobile input improvements */
+        #message-content {
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        /* Mobile compose modal improvements */
+        #compose-modal .bg-white {
+            margin: 1rem;
+            max-height: calc(100vh - 2rem);
+        }
+        
+        /* Mobile message bubbles */
+        .message-bubble {
+            max-width: 85%;
+        }
+    }
+    
+    /* Smooth transitions for mobile navigation */
+    .mobile-sidebar, .mobile-chat-area {
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    /* Better focus states for mobile */
+    input:focus, button:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+</style>
 {{-- ENHANCEMENT: Changed main background to a lighter, cleaner slate color. --}}
 <div class="messaging-container flex h-screen bg-slate-50 font-sans">
     
@@ -39,21 +103,21 @@
         <div id="mobile-chat-header" class="mobile-chat-header hidden border-t border-white/20 p-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <button id="mobile-back-btn" class="text-white hover:bg-white/20 p-1 rounded-lg transition-colors">
-                        <i class="fas fa-arrow-left"></i>
+                    <button id="mobile-back-btn" class="text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
+                        <i class="fas fa-arrow-left text-lg"></i>
                     </button>
-                    <img id="mobile-user-avatar" src="" alt="" class="w-8 h-8 rounded-full object-cover border-2 border-white/30">
+                    <img id="mobile-user-avatar" src="" alt="" class="w-10 h-10 rounded-full object-cover border-2 border-white/30">
                     <div>
-                        <h3 id="mobile-user-name" class="font-medium text-sm"></h3>
-                        <small id="mobile-user-status" class="text-xs text-white/80"></small>
+                        <h3 id="mobile-user-name" class="font-medium text-base"></h3>
+                        <small id="mobile-user-status" class="text-sm text-white/80"></small>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
                     <button class="mobile-call-btn text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
-                        <i class="fas fa-phone text-sm"></i>
+                        <i class="fas fa-phone text-base"></i>
                     </button>
                     <button class="mobile-video-btn text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
-                        <i class="fas fa-video text-sm"></i>
+                        <i class="fas fa-video text-base"></i>
                     </button>
                 </div>
             </div>
@@ -64,7 +128,7 @@
 
     {{-- Sidebar --}}
     {{-- ENHANCEMENT: Widened the sidebar slightly for better spacing on larger screens. --}}
-    <div class="w-full md:w-1/3 lg:w-96 bg-white border-r border-slate-200 flex flex-col">
+    <div id="mobile-sidebar" class="w-full md:w-1/3 lg:w-96 bg-white border-r border-slate-200 flex flex-col md:translate-x-0 -translate-x-full transition-transform duration-300 ease-in-out">
         {{-- Header --}}
         {{-- ENHANCEMENT: Cleaner header with better spacing and a subtle shadow. --}}
         <div class="p-4 border-b border-slate-200 bg-white shadow-sm">
@@ -113,8 +177,8 @@
                  data-user-name="{{ $user->name }}"
                  data-user-chapter="{{ $user->preferred_chapter_id }}">
                 <div class="relative flex-shrink-0">
-                    @if($user->avatar_url)
-                        <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-12 h-12 rounded-full object-cover">
+                    @if($user->profile_photo_path)
+                        <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="w-12 h-12 rounded-full object-cover">
                     @else
                         @php $avatar = getFirstLetterAvatar($user->name) @endphp
                         <div class="w-12 h-12 rounded-full flex justify-center items-center {{ $avatar->color }}">
@@ -150,7 +214,7 @@
     </div>
 
     {{-- Chat Area --}}
-    <div class="flex-1 flex flex-col bg-white">
+    <div id="mobile-chat-area" class="flex-1 flex flex-col bg-white md:translate-x-0 translate-x-full transition-transform duration-300 ease-in-out">
         {{-- Chat Header --}}
         {{-- ENHANCEMENT: Cleaner header design. --}}
         <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between" id="chat-header">
@@ -158,8 +222,8 @@
                 @php $selectedUser = $chatUsers->firstWhere('id', request('user_id')) @endphp
                 @if($selectedUser)
                 <div class="flex items-center gap-4">
-                    @if($selectedUser->avatar_url)
-                        <img src="{{ $selectedUser->avatar_url }}" alt="{{ $selectedUser->name }}" class="w-10 h-10 rounded-full object-cover">
+                    @if($selectedUser->profile_photo_path)
+                        <img src="{{ $selectedUser->profile_photo_url }}" alt="{{ $selectedUser->name }}" class="w-10 h-10 rounded-full object-cover">
                     @else
                         @php $avatar = getFirstLetterAvatar($selectedUser->name) @endphp
                         <div class="w-10 h-10 rounded-full flex justify-center items-center {{ $avatar->color }}">
@@ -183,7 +247,7 @@
 
         {{-- Messages Container --}}
         {{-- ENHANCEMENT: Changed background to match the main container. --}}
-        <div class="flex-1 overflow-y-auto p-6 bg-slate-50" id="messages-container">
+        <div class="flex-1 overflow-y-auto p-3 md:p-6 bg-slate-50" id="messages-container">
             @if(request('user_id'))
                 <div class="text-center text-slate-500 py-8">
                     <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
@@ -201,13 +265,15 @@
 
         {{-- Message Input --}}
         {{-- ENHANCEMENT: Cleaner input area with better focus states. --}}
-        <div class="p-4 border-t border-slate-200 bg-white" id="message-input-container" style="{{ !request('user_id') ? 'display: none;' : '' }}">
-            <form id="message-form" class="flex items-center gap-3">
+        <div class="p-3 md:p-4 border-t border-slate-200 bg-white" id="message-input-container" style="{{ !request('user_id') ? 'display: none;' : '' }}">
+            <form id="message-form" class="flex items-end gap-2 md:gap-3">
                 @csrf
                 <input type="hidden" id="receiver_id" value="{{ request('user_id') }}">
-                <input type="text" id="message-content" placeholder="Type a message..." class="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                <button type="submit" id="send-btn" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-transform hover:scale-110">
-                    <i class="fas fa-paper-plane"></i>
+                <div class="flex-1 relative">
+                    <input type="text" id="message-content" placeholder="Type a message..." class="w-full px-4 py-3 md:py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-base md:text-sm">
+                </div>
+                <button type="submit" id="send-btn" class="px-4 py-3 md:py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-transform hover:scale-110 flex-shrink-0">
+                    <i class="fas fa-paper-plane text-base md:text-sm"></i>
                 </button>
             </form>
         </div>
@@ -307,13 +373,21 @@ class SimpleMessagingApp {
             this.filterUsers();
         });
 
-        document.getElementById('mobile-sidebar-toggle')?.addEventListener('click', () => {
-            this.toggleMobileSidebar();
-        });
+       document.getElementById('mobile-sidebar-toggle')?.addEventListener('click', () => {
+           this.toggleMobileSidebar();
+       });
 
-        document.getElementById('mobile-compose-btn')?.addEventListener('click', () => {
-            this.openComposeModal();
-        });
+       document.getElementById('mobile-back-btn')?.addEventListener('click', () => {
+           this.showMobileSidebar();
+       });
+
+       document.getElementById('mobile-overlay')?.addEventListener('click', () => {
+           this.closeMobileSidebar();
+       });
+
+       document.getElementById('mobile-compose-btn')?.addEventListener('click', () => {
+           this.openComposeModal();
+       });
 
         document.getElementById('close-compose-modal')?.addEventListener('click', () => {
             this.closeComposeModal();
@@ -560,15 +634,35 @@ class SimpleMessagingApp {
     showMobileChat() {
         const mobileSidebar = document.getElementById('mobile-sidebar');
         const mobileChatArea = document.getElementById('mobile-chat-area');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        const mobileChatHeader = document.getElementById('mobile-chat-header');
         
         mobileSidebar.classList.add('-translate-x-full');
         mobileChatArea.classList.remove('translate-x-full');
+        mobileOverlay.classList.add('hidden');
+        mobileChatHeader.classList.remove('hidden');
+    }
+
+    showMobileSidebar() {
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileChatArea = document.getElementById('mobile-chat-area');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        const mobileChatHeader = document.getElementById('mobile-chat-header');
+        
+        mobileSidebar.classList.remove('-translate-x-full');
+        mobileSidebar.classList.add('translate-x-0');
+        mobileChatArea.classList.add('translate-x-full');
+        mobileOverlay.classList.remove('hidden');
+        mobileChatHeader.classList.add('hidden');
     }
 
     closeMobileSidebar() {
         const mobileSidebar = document.getElementById('mobile-sidebar');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+        
         mobileSidebar.classList.remove('translate-x-0');
         mobileSidebar.classList.add('-translate-x-full');
+        mobileOverlay.classList.add('hidden');
     }
 
     async loadMessages() {
@@ -604,24 +698,24 @@ class SimpleMessagingApp {
         container.scrollTop = container.scrollHeight;
     }
 
-    createMessageElement(message) {
-        const div = document.createElement('div');
-        const isSent = message.sender_id === this.authUserId;
-    
-        div.className = `flex ${isSent ? 'justify-end' : 'justify-start'} mb-4`;
-        div.innerHTML = `
-            <div class="max-w-xs lg:max-w-md">
-                <div class="${isSent ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none'} rounded-xl px-4 py-2 shadow-sm">
-                    <p class="text-sm">${message.content}</p>
+   createMessageElement(message) {
+       const div = document.createElement('div');
+       const isSent = message.sender_id === this.authUserId;
+   
+       div.className = `flex ${isSent ? 'justify-end' : 'justify-start'} mb-3 md:mb-4`;
+       div.innerHTML = `
+            <div class="max-w-[85%] sm:max-w-xs lg:max-w-md message-bubble">
+                <div class="${isSent ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none'} rounded-xl px-3 py-2 md:px-4 md:py-2 shadow-sm">
+                    <p class="text-sm md:text-sm leading-relaxed break-words">${message.content}</p>
                 </div>
                 <p class="text-xs text-slate-500 mt-1 px-1 ${isSent ? 'text-right' : 'text-left'}">
                     ${new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
             </div>
-      `;
-    
-        return div;
-    }
+     `;
+   
+       return div;
+   }
 
     async sendMessage() {
         const content = document.getElementById('message-content').value.trim();
@@ -719,24 +813,24 @@ class SimpleMessagingApp {
         }
     }
 
-    updateChatHeader(userId, userName) {
-        const header = document.getElementById('chat-header');
-        const userItem = document.querySelector(`[data-user-id="${userId}"]`);
-    
-        if (userItem) {
-            const imgElement = userItem.querySelector('img');
-            const letterAvatarElement = userItem.querySelector('.rounded-full:not(img)');
-            let avatarHtml = '';
-        
-            if (imgElement) {
-                avatarHtml = `<img src="${imgElement.src}" alt="${userName}" class="w-10 h-10 rounded-full object-cover">`;
-            } else if (letterAvatarElement) {
-                avatarHtml = letterAvatarElement.outerHTML.replace('w-12', 'w-10').replace('h-12', 'h-10');
-            }
-        
-            const isOnline = userItem.querySelector('.bg-green-500') !== null;
-        
-            header.innerHTML = `
+   updateChatHeader(userId, userName) {
+       const header = document.getElementById('chat-header');
+       const userItem = document.querySelector(`[data-user-id="${userId}"]`);
+   
+       if (userItem) {
+           const imgElement = userItem.querySelector('img');
+           const letterAvatarElement = userItem.querySelector('.rounded-full:not(img)');
+           let avatarHtml = '';
+   
+           if (imgElement) {
+               avatarHtml = `<img src="${imgElement.src}" alt="${userName}" class="w-10 h-10 rounded-full object-cover">`;
+           } else if (letterAvatarElement) {
+               avatarHtml = letterAvatarElement.outerHTML.replace('w-12', 'w-10').replace('h-12', 'h-10');
+           }
+   
+           const isOnline = userItem.querySelector('.bg-green-500') !== null;
+   
+           header.innerHTML = `
                 <div class="flex items-center gap-4">
                     ${avatarHtml}
                     <div>
@@ -744,9 +838,34 @@ class SimpleMessagingApp {
                         <p class="text-sm text-slate-500">${isOnline ? 'Online' : 'Offline'}</p>
                     </div>
                 </div>
-      `;
-        }
-    }
+     `;
+       }
+   }
+
+   updateMobileChatHeader(userId, userName) {
+       const mobileUserAvatar = document.getElementById('mobile-user-avatar');
+       const mobileUserName = document.getElementById('mobile-user-name');
+       const mobileUserStatus = document.getElementById('mobile-user-status');
+       const userItem = document.querySelector(`[data-user-id="${userId}"]`);
+   
+       if (userItem && mobileUserName && mobileUserStatus) {
+           const imgElement = userItem.querySelector('img');
+           const letterAvatarElement = userItem.querySelector('.rounded-full:not(img)');
+           const isOnline = userItem.querySelector('.bg-green-500') !== null;
+   
+           if (imgElement && mobileUserAvatar) {
+               mobileUserAvatar.src = imgElement.src;
+               mobileUserAvatar.alt = userName;
+           } else if (letterAvatarElement && mobileUserAvatar) {
+               // For letter avatars, we'll use a placeholder or create a simple colored div
+               mobileUserAvatar.src = '';
+               mobileUserAvatar.alt = userName;
+           }
+   
+           mobileUserName.textContent = userName;
+           mobileUserStatus.textContent = isOnline ? 'Online' : 'Offline';
+       }
+   }
 
     filterUsers(searchTerm = '') {
         const userItems = document.querySelectorAll('.user-item');
@@ -812,31 +931,42 @@ class SimpleMessagingApp {
         }
     }
 
-    toggleMobileSidebar() {
-        const mobileSidebar = document.getElementById('mobile-sidebar');
-        mobileSidebar.classList.toggle('translate-x-0');
-        mobileSidebar.classList.toggle('-translate-x-full');
-    }
+   toggleMobileSidebar() {
+       const mobileSidebar = document.getElementById('mobile-sidebar');
+       const isHidden = mobileSidebar.classList.contains('-translate-x-full');
+       
+       if (isHidden) {
+           this.showMobileSidebar();
+       } else {
+           this.closeMobileSidebar();
+       }
+   }
 
-    selectUser(userId, userName) {
-        this.selectedUserId = userId;
-    
-        const url = new URL(window.location);
-        url.searchParams.set('user_id', userId);
-        window.history.pushState({}, '', url);
+   selectUser(userId, userName) {
+       this.selectedUserId = userId;
+   
+       const url = new URL(window.location);
+       url.searchParams.set('user_id', userId);
+       window.history.pushState({}, '', url);
 
-        document.getElementById('receiver_id').value = userId;
-        document.getElementById('message-input-container').style.display = 'flex';
-    
-        document.querySelectorAll('.user-item').forEach(item => {
-            item.classList.remove('bg-blue-50');
-        });
-        document.querySelector(`[data-user-id="${userId}"]`)?.classList.add('bg-blue-50');
+       document.getElementById('receiver_id').value = userId;
+       document.getElementById('message-input-container').style.display = 'flex';
+   
+       document.querySelectorAll('.user-item').forEach(item => {
+           item.classList.remove('bg-blue-50');
+       });
+       document.querySelector(`[data-user-id="${userId}"]`)?.classList.add('bg-blue-50');
 
-        this.loadMessages();
-        this.updateChatHeader(userId, userName);
-        this.markMessagesAsRead(userId);
-    }
+       this.loadMessages();
+       this.updateChatHeader(userId, userName);
+       this.updateMobileChatHeader(userId, userName);
+       this.markMessagesAsRead(userId);
+
+       // On mobile, switch to chat view
+       if (window.innerWidth < 768) {
+           this.showMobileChat();
+       }
+   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

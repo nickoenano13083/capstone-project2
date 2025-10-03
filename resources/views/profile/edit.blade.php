@@ -21,7 +21,7 @@
                             @method('PUT')
                             <div class="w-24 h-24 rounded-full bg-indigo-100 flex items-center justify-center text-3xl font-bold text-indigo-600 overflow-hidden">
                                 @if($user->profile_photo_path)
-                                    <img src="{{ asset('storage/' . $user->profile_photo_path) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                    <img src="{{ $user->profile_photo_url }}?t={{ optional($user->updated_at)->timestamp ?? time() }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-600 text-3xl font-bold">
                                         {{ strtoupper(substr($user->name, 0, 1)) }}

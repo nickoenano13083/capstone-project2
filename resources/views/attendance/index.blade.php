@@ -108,8 +108,7 @@
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <!-- Page Header -->
             <div class="mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">Attendance Records</h1>
-                <p class="mt-2 text-gray-600">View and manage attendance across all events</p>
+                <x-page-header :icon="'fas fa-clipboard-check'" title="Attendance Records" subtitle="View and manage attendance across all events" />
             </div>
 
             <!-- Stats Overview -->
@@ -276,7 +275,9 @@
                                             </svg>
                                         </div>
                                         <div class="ml-4">
-                                            <h3 class="text-lg font-semibold text-gray-900">{{ $event->title }}</h3>
+                                            <a href="{{ route('events.show', $event) }}" class="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors duration-200 cursor-pointer">
+                                                {{ $event->title }}
+                                            </a>
                                             <div class="mt-1 flex flex-col sm:flex-row sm:flex-wrap sm:mt-0 sm:space-x-4">
                                                 <div class="flex items-center text-sm text-gray-500">
                                                     <svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">

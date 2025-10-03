@@ -49,9 +49,13 @@
                                 $colorIndex = abs(crc32($member->name)) % count($colors);
                                 $gradient = $colors[$colorIndex];
                             @endphp
-                            <div class="h-24 w-24 rounded-full bg-gradient-to-br {{ $gradient }} flex items-center justify-center text-white text-3xl font-bold shadow-md">
-                                {{ $initials }}
-                            </div>
+                            @if($member->user && $member->user->profile_photo_path)
+                                <img src="{{ $member->user->profile_photo_url }}?t={{ optional($member->user->updated_at)->timestamp ?? time() }}" alt="{{ $member->name }}" class="h-24 w-24 rounded-full object-cover shadow-md">
+                            @else
+                                <div class="h-24 w-24 rounded-full bg-gradient-to-br {{ $gradient }} flex items-center justify-center text-white text-3xl font-bold shadow-md">
+                                    {{ $initials }}
+                                </div>
+                            @endif
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">

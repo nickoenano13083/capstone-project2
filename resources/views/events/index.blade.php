@@ -119,18 +119,20 @@
     <div class="py-6">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <x-page-header :icon="'fas fa-calendar-alt'" title="{{ $showArchived ? 'Archived Events Management' : 'Events Management' }}" subtitle="{{ $showArchived ? 'View and manage archived events' : 'Create, manage, and track events and attendance' }}">
+                        @if(in_array(auth()->user()->role ?? 'Guest', ['Admin', 'Leader']))
+                            <a href="{{ route('events.create') }}" 
+                               class="inline-flex items-center px-4 py-2 bg-white text-blue-600 text-sm font-medium rounded-lg shadow-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add Event
+                            </a>
+                        @endif
+                    </x-page-header>
                     <!-- Header and Search Bar -->
                     <div class="flex flex-col space-y-4 mb-6">
                         <div class="flex flex-col md:flex-row md:items-center justify-between">
-                            <h2 class="text-2xl font-bold text-gray-800">Events Management</h2>
-                            @if(in_array(auth()->user()->role ?? 'Guest', ['Admin', 'Leader']))
-                                <a href="{{ route('events.create') }}" 
-                                   class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200">
-                                    <i class="fas fa-plus mr-2"></i>
-                                    Add Event
-                                </a>
-                            @endif
+                            
                         </div>
 
                         <form action="{{ route('events.index') }}" method="GET" id="searchForm" class="relative w-full">
@@ -168,8 +170,20 @@
                         </form>
                     </div>
 
-                    <!-- Filters Toggle Button -->
-                    <div class="mb-4">
+                    <!-- Archive Toggle and Filters -->
+                    <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <!-- Archive Toggle -->
+                        <div class="flex items-center">
+                            <a href="{{ route('events.index', array_merge(request()->query(), ['archived' => !$showArchived])) }}" 
+                               class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 {{ $showArchived ? 'bg-orange-100 text-orange-800 border border-orange-200' : 'bg-gray-100 text-gray-700 border border-gray-200' }}">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8l6 6 6-6M5 16l6-6 6 6"></path>
+                                </svg>
+                                {{ $showArchived ? 'View Active Events' : 'View Archived Events' }}
+                            </a>
+                        </div>
+                        
+                        <!-- Filters Toggle Button -->
                         <button id="filtersToggle" 
                                 class="flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 focus:outline-none">
                             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,8 +332,12 @@
                                     <tr class="hover:bg-gray-50 transition-colors duration-150">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                    <i class="fas fa-calendar-day text-blue-600"></i>
+                                                <div class="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-blue-100 flex items-center justify-center">
+                                                    @if($event->image && file_exists(storage_path('app/public/' . $event->image)))
+                                                        <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="h-12 w-12 object-cover">
+                                                    @else
+                                                        <i class="fas fa-calendar-day text-blue-600 text-lg"></i>
+                                                    @endif
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-medium text-gray-900">{{ $event->title }}</div>
@@ -330,7 +348,13 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">{{ $event->date ? $event->date->format('M j, Y') : 'No date set' }}</div>
                                             <div class="text-xs text-gray-500">
-                                                {{ $event->time ? \Carbon\Carbon::parse($event->time)->format('g:i A') : 'All Day' }}
+                                                @if($event->time && $event->end_time)
+                                                    {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($event->end_time)->format('g:i A') }}
+                                                @elseif($event->time)
+                                                    {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}
+                                                @else
+                                                    All Day
+                                                @endif
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -349,9 +373,9 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex items-center justify-end space-x-2">
                                                 @if(auth()->user()->role === 'Member')
-                                                <a href="{{ route('events.check-in', $event) }}" 
+                                                <a href="{{ route('events.member-qr', $event) }}" 
                                                    class="text-white bg-blue-500 hover:bg-blue-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
-                                                   data-tooltip="Check In to Event"
+                                                   data-tooltip="Show My QR Code"
                                                    data-tooltip-position="top">
                                                     <i class="fas fa-qrcode w-4 h-4"></i>
                                                 </a>
@@ -363,23 +387,49 @@
                                                     <i class="fas fa-eye w-4 h-4"></i>
                                                 </a>
                                                 @endif
-                                                @if(in_array(auth()->user()->role, ['Admin', 'Leader']))
+                                                @if(in_array(auth()->user()->role, ['Admin', 'Leader']) && $event->status !== 'completed')
                                                 <a href="{{ route('events.edit', $event) }}" 
                                                    class="text-white bg-yellow-500 hover:bg-yellow-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
                                                    data-tooltip="Edit Event"
                                                    data-tooltip-position="top">
                                                     <i class="fas fa-edit w-4 h-4"></i>
                                                 </a>
-                                                <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this event? This action cannot be undone.');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="text-white bg-red-500 hover:bg-red-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
-                                                            data-tooltip="Delete Event"
-                                                            data-tooltip-position="top">
-                                                        <i class="fas fa-trash w-4 h-4"></i>
-                                                    </button>
-                                                </form>
+                                                @if($showArchived)
+                                                    <!-- Restore Button for Archived Events -->
+                                                    <form action="{{ route('events.restore', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to restore this event?');">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" 
+                                                                class="text-white bg-green-500 hover:bg-green-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
+                                                                data-tooltip="Restore Event"
+                                                                data-tooltip-position="top">
+                                                            <i class="fas fa-undo w-4 h-4"></i>
+                                                        </button>
+                                                    </form>
+                                                    <!-- Delete Button for Archived Events -->
+                                                    <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to permanently delete this event? This action cannot be undone and will remove all associated data.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="text-white bg-red-500 hover:bg-red-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
+                                                                data-tooltip="Permanently Delete Event"
+                                                                data-tooltip-position="top">
+                                                            <i class="fas fa-trash w-4 h-4"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <!-- Archive Button for Active Events -->
+                                                    <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to archive this event?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="text-white bg-orange-500 hover:bg-orange-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
+                                                                data-tooltip="Archive Event"
+                                                                data-tooltip-position="top">
+                                                            <i class="fas fa-archive w-4 h-4"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                                 @endif
                                             </div>
                                         </td>
@@ -387,7 +437,11 @@
                                 @empty
                                     <tr>
                                         <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            No events found.
+                                            @if(request('status') === 'upcoming' || (request('status') === 'all' || !request('status')))
+                                                No upcoming events found.
+                                            @else
+                                                No events found.
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforelse
@@ -407,6 +461,11 @@
                                 ][$event->status] ?? 'bg-gray-100 text-gray-800';
                             @endphp
                             <div class="event-card rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+                                @if($event->image && file_exists(storage_path('app/public/' . $event->image)))
+                                    <div class="h-48 w-full overflow-hidden">
+                                        <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover">
+                                    </div>
+                                @endif
                                 <div class="p-6">
                                     <div class="flex justify-between items-start mb-4">
                                         <h3 class="text-lg font-semibold text-gray-900">{{ $event->title }}</h3>
@@ -422,7 +481,10 @@
                                     <div class="flex items-center text-sm text-gray-600 mb-3">
                                         <i class="far fa-calendar-alt mr-2 text-blue-500"></i>
                                         <span>{{ $event->date ? $event->date->format('M j, Y') : 'No date set' }}</span>
-                                        @if($event->time)
+                                        @if($event->time && $event->end_time)
+                                            <span class="mx-1">•</span>
+                                            <span>{{ \Carbon\Carbon::parse($event->time)->format('g:i A') }} - {{ \Carbon\Carbon::parse($event->end_time)->format('g:i A') }}</span>
+                                        @elseif($event->time)
                                             <span class="mx-1">•</span>
                                             <span>{{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}</span>
                                         @else
@@ -452,15 +514,52 @@
                                             {{ $event->attendance_count ?? 0 }} attending
                                         </div>
                                         <div class="flex space-x-2">
-                                            <a href="{{ route('events.show', $event) }}" 
-                                               class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
-                                                View
-                                            </a>
+                                            @if(auth()->user()->role === 'Member')
+                                                <a href="{{ route('events.member-qr', $event) }}" 
+                                                   class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                                                    My QR Code
+                                                </a>
+                                            @else
+                                                <a href="{{ route('events.show', $event) }}" 
+                                                   class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                                                    View
+                                                </a>
+                                            @endif
                                             @if(in_array(auth()->user()->role, ['Admin', 'Leader']))
                                                 <a href="{{ route('events.edit', $event) }}" 
                                                    class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
                                                     Edit
                                                 </a>
+                                                @if($showArchived)
+                                                    <!-- Restore Button for Archived Events -->
+                                                    <form action="{{ route('events.restore', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to restore this event?');">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" 
+                                                                class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
+                                                            Restore
+                                                        </button>
+                                                    </form>
+                                                    <!-- Delete Button for Archived Events -->
+                                                    <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to permanently delete this event? This action cannot be undone and will remove all associated data.');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <!-- Archive Button for Active Events -->
+                                                    <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to archive this event?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" 
+                                                                class="px-3 py-1.5 bg-orange-600 text-white text-xs font-medium rounded hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors duration-200">
+                                                            Archive
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>
@@ -471,8 +570,13 @@
                                 <div class="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                                     <i class="fas fa-calendar-day text-gray-400 text-2xl"></i>
                                 </div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-1">No events found</h3>
-                                <p class="text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+                                @if(request('status') === 'upcoming' || (request('status') === 'all' || !request('status')))
+                                    <h3 class="text-lg font-medium text-gray-900 mb-1">No upcoming events</h3>
+                                    <p class="text-gray-500">All events have been completed or there are no events scheduled.</p>
+                                @else
+                                    <h3 class="text-lg font-medium text-gray-900 mb-1">No events found</h3>
+                                    <p class="text-gray-500">Try adjusting your search or filter to find what you're looking for.</p>
+                                @endif
                                 @if(in_array(auth()->user()->role ?? 'Guest', ['Admin', 'Leader']))
                                     <div class="mt-6">
                                         <a href="{{ route('events.create') }}" 
@@ -549,6 +653,34 @@
             document.getElementById('filtersPanel').classList.toggle('hidden');
             document.getElementById('filtersToggleIcon').classList.toggle('rotate-180');
         });
+
+        // Handle filter form submission
+        document.getElementById('filtersForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const params = new URLSearchParams();
+            
+            // Add all form fields to params
+            for (let [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+            
+            // Redirect to the same page with new parameters
+            window.location.href = '{{ route("events.index") }}?' + params.toString();
+        });
+
+        // Auto-submit on filter change (optional - uncomment if you want instant filtering)
+        /*
+        document.querySelectorAll('#filtersForm select, #filtersForm input').forEach(element => {
+            element.addEventListener('change', function() {
+                document.getElementById('filtersForm').dispatchEvent(new Event('submit'));
+            });
+        });
+        */
     </script>
     @endpush
 </x-app-layout>
