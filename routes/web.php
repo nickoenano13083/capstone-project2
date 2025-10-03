@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AnnouncementController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
