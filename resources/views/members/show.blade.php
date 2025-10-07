@@ -19,23 +19,35 @@
                         </svg>
                         Edit Profile
                     </a>
-                    <form action="{{ route('members.destroy', $member) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this member? This action cannot be undone.');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                            Delete
-                        </button>
-                    </form>
+                    @if($member->is_archived)
+                        <form action="{{ route('members.unarchive', $member) }}" method="POST" class="inline" onsubmit="return confirm('Unarchive this member?');">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V7a2 2 0 00-2-2h-6m8 8l-3 3m3-3l-3-3M4 7v10a2 2 0 002 2h10"></path>
+                                </svg>
+                                Unarchive
+                            </button>
+                        </form>
+                    @else
+                        <form action="{{ route('members.archive', $member) }}" method="POST" class="inline" onsubmit="return confirm('Archive this member? They will be moved to the archived section.');">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:from-gray-600 hover:to-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m4-4H8m9 9a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2h10z"></path>
+                                </svg>
+                                Archive
+                            </button>
+                        </form>
+                    @endif
                 @endif
             </div>
         </div>
     </x-slot>
 
-    <div class="py-6">
-        <div class="px-4 sm:px-6 lg:px-8">
+    <div class="dashboard-main-content p-6">
             <!-- Profile Header -->
             <div class="bg-gradient-to-br from-blue-400 to-indigo-100 overflow-hidden shadow-lg rounded-lg mb-8 border border-gray-200">
                 <div class="px-6 py-8 sm:p-10">
@@ -173,6 +185,20 @@
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
                                     <dd class="mt-1 text-sm text-gray-900">{{ $member->phone ?? 'N/A' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Age</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ $member->age ?? 'N/A' }}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Birthday</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">
+                                        @if(!empty($member->birthday))
+                                            {{ optional($member->birthday)->format('F d, Y') ?? \Carbon\Carbon::parse($member->birthday)->format('F d, Y') }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </dd>
                                 </div>
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">Member Since</dt>
@@ -383,7 +409,6 @@
                     @endif
                 </div>
             </div>
-        </div>
     </div>
 
     @push('styles')

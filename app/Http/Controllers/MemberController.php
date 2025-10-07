@@ -193,10 +193,15 @@ class MemberController extends Controller
         if (!auth()->check() || !in_array(auth()->user()->role, ['Admin', 'Leader'])) {
             abort(403, 'Unauthorized');
         }
+        // Normalize phone to digits only before validating
+        $request->merge([
+            'phone' => preg_replace('/[^0-9]/', '', (string) $request->input('phone')),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:members,email',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|regex:/^\d{11}$/|unique:members,phone',
             'address' => 'required|string|max:255',
             'join_date' => 'required|date',
             'chapter_id' => 'nullable|exists:chapters,id',
@@ -309,10 +314,15 @@ class MemberController extends Controller
                 abort(403, 'Access denied.');
             }
         }
+        // Normalize phone to digits only before validating
+        $request->merge([
+            'phone' => preg_replace('/[^0-9]/', '', (string) $request->input('phone')),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:members,email,' . $member->id,
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|regex:/^\d{11}$/|unique:members,phone,' . $member->id,
             'address' => 'required|string|max:255',
             'join_date' => 'required|date',
             'status' => 'required|in:Active,Inactive,Transfer,Work,Deceased',

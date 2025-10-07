@@ -1884,7 +1884,7 @@
         <div class="top-banner" style="margin-top: 0;">
             <div class="church-info">
                 <h2>JESUS IS LORD CHURCH</h2>
-                <p>Sorsogon City, Sorsogon, Philippines</p>
+                <p>Sorsogon, Philippines</p>
             </div>
             <div class="stats-grid">
                 <div class="stat-card">

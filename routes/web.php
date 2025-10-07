@@ -134,6 +134,9 @@ Route::middleware('auth')->group(function () {
     // Attendance routes - allow viewing for all authenticated users, but protect other operations
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::get('/attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
+    // Event-specific attendance listing
+    Route::get('/events/{event}/attendance', [AttendanceController::class, 'eventAttendance'])
+        ->name('attendance.event');
     
     // Protected attendance routes for creating/editing/deleting
     Route::middleware(['auth', 'admin.leader'])->group(function() {
@@ -189,6 +192,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/resources/test-upload', [ResourceController::class, 'testUpload'])->name('resources.test-upload');
 
     Route::get('/admin/users', [AdminUserController::class, 'index'])->name('admin.users.index')->middleware('admin.leader');
+    Route::get('/admin/users/{id}', [AdminUserController::class, 'show'])->name('admin.users.show')->middleware('admin.leader');
     Route::post('/admin/users/{id}/role', [AdminUserController::class, 'updateRole'])->name('admin.users.updateRole')->middleware('admin.leader');
     Route::post('/admin/users/{id}/chapter', [AdminUserController::class, 'updateChapter'])->name('admin.users.updateChapter')->middleware('admin.leader');
     Route::post('/admin/users/{id}/assign-leader', [AdminUserController::class, 'assignLeader'])->name('admin.users.assignLeader')->middleware('admin.leader');

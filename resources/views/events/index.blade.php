@@ -267,7 +267,7 @@
                                 </div>
                                 <div class="flex items-end space-x-3">
                                     <button type="submit" 
-                                            class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-gray-700 font-medium text-sm rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5">
+                                            class="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium text-sm rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 transform hover:-translate-y-0.5">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                                         </svg>
@@ -314,9 +314,11 @@
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
                                     </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
+                                    @if(auth()->user()->role !== 'Member')
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
@@ -329,7 +331,8 @@
                                             'cancelled' => 'bg-red-100 text-red-800 border border-red-200'
                                         ][$event->status] ?? 'bg-gray-100 text-gray-800';
                                     @endphp
-                                    <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <tr class="hover:bg-gray-50 transition-colors duration-150 @if(auth()->user()->role === 'Member') cursor-pointer @endif"
+                                        @if(auth()->user()->role === 'Member') onclick="window.location='{{ route('events.show', $event) }}'" @endif>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="flex-shrink-0 h-12 w-12 rounded-lg overflow-hidden bg-blue-100 flex items-center justify-center">
@@ -370,14 +373,15 @@
                                                 {{ ucfirst($event->status) }}
                                             </span>
                                         </td>
+                                        @if(auth()->user()->role !== 'Member')
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex items-center justify-end space-x-2">
                                                 @if(auth()->user()->role === 'Member')
-                                                <a href="{{ route('events.member-qr', $event) }}" 
+                                                <a href="{{ route('events.show', $event) }}" 
                                                    class="text-white bg-blue-500 hover:bg-blue-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
-                                                   data-tooltip="Show My QR Code"
+                                                   data-tooltip="View Event"
                                                    data-tooltip-position="top">
-                                                    <i class="fas fa-qrcode w-4 h-4"></i>
+                                                    <i class="fas fa-eye w-4 h-4"></i>
                                                 </a>
                                                 @else
                                                 <a href="{{ route('events.show', $event) }}" 
@@ -388,12 +392,7 @@
                                                 </a>
                                                 @endif
                                                 @if(in_array(auth()->user()->role, ['Admin', 'Leader']) && $event->status !== 'completed')
-                                                <a href="{{ route('events.edit', $event) }}" 
-                                                   class="text-white bg-yellow-500 hover:bg-yellow-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
-                                                   data-tooltip="Edit Event"
-                                                   data-tooltip-position="top">
-                                                    <i class="fas fa-edit w-4 h-4"></i>
-                                                </a>
+                                                
                                                 @if($showArchived)
                                                     <!-- Restore Button for Archived Events -->
                                                     <form action="{{ route('events.restore', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to restore this event?');">
@@ -433,10 +432,11 @@
                                                 @endif
                                             </div>
                                         </td>
+                                        @endif
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colspan="{{ auth()->user()->role === 'Member' ? '4' : '5' }}" class="px-6 py-4 text-center text-sm text-gray-500">
                                             @if(request('status') === 'upcoming' || (request('status') === 'all' || !request('status')))
                                                 No upcoming events found.
                                             @else
@@ -460,7 +460,8 @@
                                     'cancelled' => 'bg-red-100 text-red-800 border border-red-200'
                                 ][$event->status] ?? 'bg-gray-100 text-gray-800';
                             @endphp
-                            <div class="event-card rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+                            <div class="event-card rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 @if(auth()->user()->role === 'Member') cursor-pointer @endif"
+                                 @if(auth()->user()->role === 'Member') onclick="window.location='{{ route('events.show', $event) }}'" @endif>
                                 @if($event->image && file_exists(storage_path('app/public/' . $event->image)))
                                     <div class="h-48 w-full overflow-hidden">
                                         <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover">
@@ -515,9 +516,9 @@
                                         </div>
                                         <div class="flex space-x-2">
                                             @if(auth()->user()->role === 'Member')
-                                                <a href="{{ route('events.member-qr', $event) }}" 
+                                                <a href="{{ route('events.show', $event) }}" 
                                                    class="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
-                                                    My QR Code
+                                                    View
                                                 </a>
                                             @else
                                                 <a href="{{ route('events.show', $event) }}" 
@@ -526,10 +527,7 @@
                                                 </a>
                                             @endif
                                             @if(in_array(auth()->user()->role, ['Admin', 'Leader']))
-                                                <a href="{{ route('events.edit', $event) }}" 
-                                                   class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-medium rounded hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200">
-                                                    Edit
-                                                </a>
+                                                
                                                 @if($showArchived)
                                                     <!-- Restore Button for Archived Events -->
                                                     <form action="{{ route('events.restore', $event) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to restore this event?');">

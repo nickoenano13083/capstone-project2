@@ -59,19 +59,25 @@ class RegisteredUserController extends Controller
             'email' => strtolower(trim((string) $request->input('email'))),
         ]);
 
+        // Normalize phone to digits only before validating
+        $request->merge([
+            'phone' => preg_replace('/[^0-9]/', '', (string) $request->input('phone')),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:255', 'unique:users,name'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', new PasswordRule()],
             'preferred_chapter_id' => ['required', 'exists:chapters,id'],
-            'phone' => ['required', 'string', 'max:20', 'unique:members,phone'],
+            'phone' => ['required', 'regex:/^\\d{11}$/', 'unique:members,phone'],
             'birthday' => [
                 'required', 
                 'date', 
                 'before_or_equal:' . now()->subYears(3)->format('Y-m-d'),
                 'after_or_equal:' . now()->subYears(120)->format('Y-m-d')
             ],
-            'age' => ['required', 'integer', 'min:3', 'max:120'],
+            // age will be computed from birthday; keep optional if present but not trusted
+            'age' => ['nullable', 'integer', 'min:3', 'max:120'],
             'address' => ['required', 'string', 'max:500'],
             'gender' => ['required', 'in:Male,Female'],
             'invitation_code' => ['sometimes', 'required', 'exists:invitation_codes,code'],
@@ -87,6 +93,9 @@ class RegisteredUserController extends Controller
         // Get the invitation code before validation removes it
         $invitation = InvitationCode::where('code', $request->input('invitation_code'))->first();
         
+        // Compute age from birthday for consistency
+        $computedAge = \Carbon\Carbon::parse($request->input('birthday'))->age;
+
         // Create the user
         $user = User::create([
             'name' => $request->name,
@@ -94,7 +103,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'preferred_chapter_id' => $request->input('preferred_chapter_id'),
             'birthday' => $request->input('birthday'),
-            'age' => $request->input('age'),
+            'age' => $computedAge,
             'address' => $request->input('address'),
             'gender' => $request->input('gender'),
         ]);
@@ -106,7 +115,7 @@ class RegisteredUserController extends Controller
             'phone' => $request->input('phone'),
             'chapter_id' => $request->input('preferred_chapter_id'),
             'birthday' => $request->input('birthday'),
-            'age' => $request->input('age'),
+            'age' => $computedAge,
             'address' => $request->input('address'),
             'gender' => $request->input('gender'),
             'join_date' => now(),

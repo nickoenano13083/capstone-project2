@@ -15,6 +15,7 @@ class Member extends Model
 
     protected $fillable = [
         'user_id',
+        'member_code',
         'name',
         'email',
         'phone',
@@ -40,6 +41,31 @@ class Member extends Model
     {
         parent::boot();
         static::creating(function ($member) {
+            // Ensure member_code is set (sequential per registration year: YYYY-######)
+            if (empty($member->member_code)) {
+                $year = null;
+                if (!empty($member->join_date)) {
+                    $year = $member->join_date->format('Y');
+                }
+                if (!$year && !empty($member->created_at)) {
+                    $year = $member->created_at->format('Y');
+                }
+                if (!$year) {
+                    $year = date('Y');
+                }
+
+                $prefix = $year . '-';
+                $lastForYear = static::whereNotNull('member_code')
+                    ->where('member_code', 'like', $prefix . '%')
+                    ->orderByDesc('id')
+                    ->value('member_code');
+
+                $next = 1;
+                if ($lastForYear && preg_match('/^' . preg_quote($year, '/') . '-(\d{6})$/', $lastForYear, $m)) {
+                    $next = intval($m[1]) + 1;
+                }
+                $member->member_code = $year . '-' . str_pad((string)$next, 6, '0', STR_PAD_LEFT);
+            }
             if (empty($member->qr_code)) {
                 $member->qr_code = (string) Str::uuid();
             }

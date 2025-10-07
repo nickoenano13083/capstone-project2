@@ -1,111 +1,78 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0">
-            <div class="flex items-center space-x-4 flex-1">
-                <div class="flex-shrink-0">
-                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                </div>
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-900">{{ $event->title }}</h2>
-                    <p class="text-sm text-gray-600">{{ $event->date->format('l, F j, Y') }} • {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}</p>
-                </div>
-            </div>
-            <div class="flex flex-wrap gap-3">
-                <a href="{{ route('events.index') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                    Back to Events
-                </a>
-                @php $role = auth()->user()->role ?? 'Guest'; @endphp
-                @if(in_array($role, ['Admin', 'Leader']))
-                    <a href="{{ route('events.edit', $event) }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit Event
-                    </a>
-                    <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200" onclick="return confirm('Are you sure you want to delete this event?')">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Delete
-                        </button>
-                    </form>
-                @endif
-            </div>
-        </div>
-    </x-slot>
+    
 
     <div class="py-6">
         <div class="w-full px-4 sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 @if(in_array(auth()->user()->role, ['Admin', 'Leader']))
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                    <!-- Event Header with Enhanced Info -->
-                    <div class="bg-gradient-to-r from-blue-500 via-purple-600 to-indigo-600 p-6 text-white rounded-t-lg relative overflow-hidden">
+                <div class="p-0">
+                    <!-- Event Header with Enhanced Info (refined UI) -->
+                    <div class="p-6 md:p-8 text-white rounded-t-2xl relative overflow-hidden shadow-sm bg-blue-900">
                         <div class="absolute inset-0 bg-black opacity-10"></div>
                         <div class="relative z-10">
-                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                                 <div class="flex-1">
-                                    <h3 class="text-3xl font-bold mb-2">{{ $event->title }}</h3>
-                                    <div class="flex flex-wrap items-center gap-4 text-blue-100">
-                                        <div class="flex items-center">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ $event->date->format('l, F j, Y') }}
-                                        </div>
-                                        <div class="flex items-center">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            {{ \Carbon\Carbon::parse($event->time)->format('g:i A') }}
-                                            @if($event->end_time)
-                                                - {{ \Carbon\Carbon::parse($event->end_time)->format('g:i A') }}
-                                            @endif
-                                        </div>
-                                        @if($event->location)
-                                        <div class="flex items-center">
-                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            {{ $event->location }}
-                                        </div>
+                                    <div class="flex items-center flex-wrap gap-3 mb-2">
+                                        @if(in_array(auth()->user()->role, ['Admin','Leader']))
+                                            <a href="{{ route('attendance.event', $event) }}" class="text-3xl md:text-4xl font-extrabold tracking-tight hover:underline">
+                                                {{ $event->title }}
+                                            </a>
+                                        @else
+                                            <h3 class="text-3xl md:text-4xl font-extrabold tracking-tight">{{ $event->title }}</h3>
                                         @endif
+                                        <span class="px-3 py-1 text-xs font-semibold rounded-full {{ $event->status === 'upcoming' ? 'bg-green-200/30 text-green-50 ring-1 ring-white/30' : ($event->status === 'ongoing' ? 'bg-blue-200/30 text-blue-50 ring-1 ring-white/30' : 'bg-gray-200/30 text-gray-50 ring-1 ring-white/30') }}">
+                                            {{ ucfirst($event->status) }}
+                                        </span>
                                     </div>
+                                    
                                 </div>
-                                <div class="mt-4 lg:mt-0 lg:ml-6">
-                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        <div class="text-center">
+                                <div class="flex flex-col-reverse lg:flex-row lg:items-center lg:gap-6 mt-4 lg:mt-0 lg:ml-6 w-full lg:w-auto">
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 flex-1">
+                                        <div class="text-center p-3 md:p-4 rounded-lg border border-white/10 bg-white/10 backdrop-blur-sm">
                                             <div class="text-2xl font-bold">{{ $event->attendance->count() }}</div>
                                             <div class="text-sm text-blue-200">Total Attendees</div>
                                         </div>
-                                        <div class="text-center">
+                                        <div class="text-center p-3 md:p-4 rounded-lg border border-white/10 bg-white/10 backdrop-blur-sm">
                                             <div class="text-2xl font-bold">{{ $event->attendance->where('status', 'present')->count() }}</div>
                                             <div class="text-sm text-blue-200">Present</div>
                                         </div>
-                                        <div class="text-center">
+                                        <div class="text-center p-3 md:p-4 rounded-lg border border-white/10 bg-white/10 backdrop-blur-sm">
                                             <div class="text-2xl font-bold">{{ $event->attendance->where('status', 'absent')->count() }}</div>
                                             <div class="text-sm text-blue-200">Absent</div>
                                         </div>
-                                        <div class="text-center">
-                                            <div class="text-2xl font-bold">
-                                                @php
-                                                    $daysUntil = now()->diffInDays($event->date, false);
-                                                    echo $daysUntil >= 0 ? $daysUntil : 0;
-                                                @endphp
-                                            </div>
-                                            <div class="text-sm text-blue-200">Days Until</div>
-                                        </div>
+                                    </div>
+                                    <div class="flex flex-wrap justify-end gap-3">
+                                        <a href="{{ route('events.index') }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-300 transition-colors duration-200">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                            </svg>
+                                            Back
+                                        </a>
+                                        <a href="{{ route('attendance.event', $event) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-300 transition-colors duration-200">
+                                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                            </svg>
+                                            Attendance
+                                        </a>
+                                        @php $role = auth()->user()->role ?? 'Guest'; @endphp
+                                        @if(in_array($role, ['Admin', 'Leader']))
+                                            <a href="{{ route('events.edit', $event) }}" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-300 transition-colors duration-200">
+                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                Edit
+                                            </a>
+                                            <form action="{{ route('events.destroy', $event) }}" method="POST" class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                 <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-200 transition-colors duration-200" onclick="return confirm('Are you sure you want to delete this event?')">
+                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -118,8 +85,8 @@
                             <!-- Event Image Container -->
                             <div class="lg:order-1">
                                 @if($event->image && file_exists(storage_path('app/public/' . $event->image)))
-                                    <div class="h-80 lg:h-full min-h-80 overflow-hidden">
-                                        <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                                    <div class="max-h-80 md:max-h-96 overflow-hidden bg-white flex items-center justify-center border border-gray-200 rounded-lg p-2 shadow-sm">
+                                        <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="max-h-80 md:max-h-96 w-auto object-contain transition-transform duration-300">
                                     </div>
                                 @else
                                     <div class="h-80 lg:h-full min-h-80 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -223,103 +190,155 @@
                         </div>
                     </div>
 
-                    <!-- QR Code Scanner for Check-in -->
-                    <div class="bg-white border border-gray-200 mb-6 p-6">
-                        <div class="text-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Member Check-in Scanner</h3>
-                            <p class="text-gray-600">Scan member QR codes to check them in for this event</p>
+                    <!-- Manual Member Code Check-in -->
+                    <div class="bg-blue-50 border border-blue-200 mb-6 p-6 rounded-lg">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-blue-900 mb-1">Member Check-in</h3>
+                                <p class="text-blue-700">Enter a member code to record attendance for this event</p>
+                            </div>
+                            @php
+                                $statusColor = 'bg-gray-200 text-gray-800';
+                                if ($event->status === 'ongoing') $statusColor = 'bg-green-100 text-green-800';
+                                elseif ($event->status === 'upcoming') $statusColor = 'bg-yellow-100 text-yellow-800';
+                                elseif ($event->status === 'completed') $statusColor = 'bg-gray-300 text-gray-700';
+                            @endphp
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
+                                Status: {{ ucfirst($event->status) }}
+                            </span>
                         </div>
-                        
-                        <div class="flex flex-col lg:flex-row gap-6">
-                            <!-- QR Scanner -->
-                            <div class="flex-1">
-                                <div class="bg-gray-100 rounded-lg overflow-hidden mb-4" style="min-height: 300px;">
-                                <div id="qr-reader" style="width: 100%;">
-                                    <div class="flex items-center justify-center h-64 bg-gray-100 rounded-lg">
-                                        <div class="text-center">
-                                            <i class="fas fa-camera text-gray-400 text-4xl mb-2"></i>
-                                            <p class="text-gray-600 font-medium">QR Code Scanner</p>
-                                            <p class="text-gray-500 text-sm mt-1">Click "Start Scanner" to begin</p>
-                                            <button onclick="window.initScanner()" class="mt-3 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                                                <i class="fas fa-play mr-2"></i>
-                                                Start Scanner
-                                            </button>
-                                            <div class="mt-2">
-                                                <button onclick="window.initSimpleScanner()" class="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
-                                                    Try Alternative Scanner
-                                                </button>
-                                            </div>
+
+                        <div class="max-w-xl mx-auto">
+                            @php
+                                // Compute ongoing state similar to controller (simple approximation for UI)
+                                $eventDate = $event->date ? $event->date->format('Y-m-d') : null;
+                                $startAt = $eventDate && $event->time ? \Carbon\Carbon::parse($eventDate.' '.$event->time) : ($eventDate ? \Carbon\Carbon::parse($eventDate.' 00:00:00') : null);
+                                $endAt = $eventDate && $event->end_time ? \Carbon\Carbon::parse($eventDate.' '.$event->end_time) : ($eventDate ? \Carbon\Carbon::parse($eventDate.' 23:59:59') : null);
+                                $isOngoingNow = $startAt && $endAt ? now()->between($startAt, $endAt) : false;
+                            @endphp
+                            <form method="POST" action="{{ url('/events/'.$event->id.'/check-in') }}" class="w-full" id="manual-checkin-form">
+                                @csrf
+                                <label for="manual-qr-input" class="block text-sm font-medium text-blue-900 mb-1">Member Code (YYYY-000123)</label>
+                                <div class="flex">
+                                    <input 
+                                        type="text" 
+                                        id="manual-qr-input" 
+                                        name="qr_data"
+                                        placeholder="e.g. 2025-000123 or 123"
+                                        class="flex-1 rounded-l-lg border-blue-200 bg-white focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                        value="{{ old('qr_data') }}"
+                                        @if(!$isOngoingNow) disabled @endif
+                                    >
+                                    <button 
+                                        id="manual-submit"
+                                        type="submit"
+                                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-r-lg transition-colors"
+                                        @if(!$isOngoingNow) disabled @endif
+                                    >
+                                        Check In
+                                    </button>
+                                </div>
+                                @if(!$isOngoingNow)
+                                    <p class="text-sm text-blue-700 mt-2">Check-in is available only when the event is ongoing.</p>
+                                @else
+                                    <div class="mt-3 flex items-center justify-between">
+                                        <div class="text-xs text-blue-700" id="checkin-countdown"></div>
+                                    </div>
+                                @endif
+                                @error('qr_data')
+                                    <p class="text-sm text-red-600 mt-2">{{ $message }}</p>
+                                @enderror
+                                @if(session('success'))
+                                    <p class="text-sm text-green-600 mt-2">{{ session('success') }}</p>
+                                @endif
+                                <p class="text-xs text-blue-700 mt-1">Tip: You can press Enter after typing the code.</p>
+                                @if(auth()->check() && in_array(auth()->user()->role, ['Admin','Leader']))
+                                    <div class="mt-3 flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <label class="inline-flex items-center text-xs text-blue-800">
+                                                <input type="checkbox" id="autofocus-toggle" class="mr-1" checked>
+                                                Autofocus
+                                            </label>
+                                            <label class="inline-flex items-center text-xs text-blue-800">
+                                                <input type="checkbox" id="autosubmit-toggle" class="mr-1">
+                                                Auto-submit on valid code
+                                            </label>
+                                            <a href="{{ route('attendance.index') }}" class="text-xs text-indigo-700 hover:underline">View attendance</a>
                                         </div>
                                     </div>
-                                </div>
-                                </div>
-                                
-                                <!-- Manual QR Code Input -->
-                                <div class="mt-4">
-                                    <p class="text-center text-gray-600 mb-2">- OR -</p>
-                                    <div class="flex">
-                                        <input 
-                                            type="text" 
-                                            id="manual-qr-input" 
-                                            placeholder="Enter member QR code value"
-                                            class="flex-1 rounded-l-lg border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                                        >
-                                        <button 
-                                            id="manual-submit"
-                                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-r-lg transition-colors"
-                                        >
-                                            Check In
-                                        </button>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">Enter member's QR code value if the scanner isn't working</p>
-                                </div>
-                                
-                                <div id="qr-reader-results" class="mt-4"></div>
-                                
-                                <!-- Scanner Controls -->
-                                <div id="scanner-controls" class="mt-4 text-center" style="display: none;">
-                                    <button onclick="stopScanner()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-                                        <i class="fas fa-stop mr-2"></i>
-                                        Stop Scanner
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Quick Actions -->
-                            <div class="lg:w-80">
-                                <div class="space-y-3">
-                                    <a href="{{ route('events.check-in', $event) }}" class="w-full inline-flex items-center justify-center px-4 py-2 bg-green-500 text-white text-sm font-medium rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        Manual Check-in
-                                    </a>
-                                    <button onclick="window.print()" class="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                        </svg>
-                                        Print Event
-                                    </button>
-                                    <button onclick="shareEvent()" class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
-                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                                        </svg>
-                                        Share Event
-                                    </button>
-                                </div>
-                            </div>
+                                @endif
+                            </form>
+
+                            <div id="qr-reader-results" class="mt-4"></div>
                         </div>
+                    </div>
+
+                    <!-- Recent Check-ins -->
+                    <div class="bg-white border border-gray-200 mb-6 p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Recent Check-ins</h3>
+                            <span class="text-xs text-gray-500">Last 5</span>
+                        </div>
+                        @php
+                            $recentCheckIns = $event->attendance
+                                ->where('status', 'present')
+                                ->sortByDesc(function($a){ return $a->check_in_time ?? $a->created_at; })
+                                ->take(5);
+                        @endphp
+                        @if($recentCheckIns->count() > 0)
+                            <ul class="divide-y divide-gray-200">
+                                @foreach($recentCheckIns as $att)
+                                    <li class="py-3 flex items-center justify-between">
+                                        <div class="flex items-center min-w-0">
+                                            <div class="h-9 w-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-semibold mr-3">
+                                                {{ strtoupper(substr($att->member->name ?? 'M', 0, 1)) }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 truncate">{{ $att->member->name ?? 'Member' }}</p>
+                                                <p class="text-xs text-gray-500 truncate">{{ $att->member->email ?? '' }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="text-right ml-3">
+                                            <p class="text-sm text-gray-700">
+                                                {{ \Carbon\Carbon::parse($att->check_in_time ?? $att->created_at)->format('M j, Y g:i A') }}
+                                            </p>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @else
+                            <p class="text-sm text-gray-600">No recent check-ins yet.</p>
+                        @endif
                     </div>
                 </div>
                 @endif
 
                 <!-- Member View -->
                 @if(isset($isMemberView) && $isMemberView)
-                <div class="p-6 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                    <!-- Event Header -->
-                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-gray-900 rounded-t-lg">
-                        <h3 class="text-2xl font-bold">{{ $event->title }}</h3>
-                        <p class="text-blue-100 mt-1">{{ $event->date->format('l, F j, Y') }}</p>
+                <div class="p-0">
+                    <!-- Event Header (match admin style) -->
+                    <div class="p-6 md:p-8 text-white rounded-t-2xl relative overflow-hidden shadow-sm bg-blue-900">
+                        <div class="absolute inset-0 bg-black opacity-10"></div>
+                        <div class="relative z-10">
+                            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                                <div class="mb-4 md:mb-0">
+                                    <h2 class="text-2xl md:text-3xl font-bold tracking-tight">{{ $event->title }}</h2>
+                                    <p class="text-blue-100 mt-1">{{ $event->date->format('l, F j, Y') }}</p>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <a href="{{ route('events.index') }}" class="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200">
+                                        <i class="fas fa-arrow-left mr-2"></i>
+                                        Back to Events
+                                    </a>
+                                    @if(in_array(auth()->user()->role, ['Admin','Leader']))
+                                    <a href="{{ route('attendance.event', $event) }}" class="inline-flex items-center px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200">
+                                        <i class="fas fa-list mr-2"></i>
+                                        Attendance
+                                    </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Event Content with Image and Information Side by Side -->
@@ -328,8 +347,8 @@
                             <!-- Event Image Container -->
                             <div class="lg:order-1">
                                 @if($event->image && file_exists(storage_path('app/public/' . $event->image)))
-                                    <div class="h-80 lg:h-full min-h-80 overflow-hidden">
-                                        <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                                    <div class="max-h-80 md:max-h-96 overflow-hidden bg-white flex items-center justify-center border border-gray-200 rounded-lg p-2 shadow-sm">
+                                        <img src="{{ asset('storage/' . $event->image) }}" alt="{{ $event->title }}" class="max-h-80 md:max-h-96 w-auto object-contain transition-transform duration-300">
                                     </div>
                                 @else
                                     <div class="h-80 lg:h-full min-h-80 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -435,6 +454,7 @@
                 </div>
                 @endif
 
+                @if(auth()->user()->role !== 'Member')
                 <!-- Attendance List -->
                 <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
                     <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
@@ -518,6 +538,7 @@
                         @endif
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div>
@@ -1047,23 +1068,64 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Handle manual form submission for QR scanner
+    // Handle manual form submission for member ID code
     const manualSubmit = document.getElementById('manual-submit');
     const manualQrInput = document.getElementById('manual-qr-input');
 
-    if (manualSubmit && manualQrInput) {
-        manualSubmit.addEventListener('click', function() {
-            const qrValue = manualQrInput.value.trim();
-            if (!qrValue) {
-                showError('Please enter a QR code value');
-                return;
-            }
-            handleQrCode(qrValue);
-        });
+    async function submitManualCode() {
+        const code = (manualQrInput?.value || '').trim();
+        if (!code) {
+            showError('Please enter a member ID code');
+            manualQrInput?.focus();
+            return;
+        }
+        try {
+            showLoading('Checking in...');
+            // Try API endpoint first (no auth required)
+            let res = await fetch(`/api/events/{{ $event->id }}/check-in`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ qr_data: code, event_id: {{ $event->id }} })
+            });
+            let data;
+            try { data = await res.json(); } catch (_) { data = null; }
 
+            // If API fails or not available, fallback to web route (requires auth + CSRF)
+            if (!res.ok || !data || data.success !== true) {
+                const csrf = document.querySelector('meta[name="csrf-token"]').content;
+                res = await fetch(`/events/{{ $event->id }}/check-in`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrf
+                    },
+                    body: JSON.stringify({ qr_data: code, event_id: {{ $event->id }} })
+                });
+                try { data = await res.json(); } catch (_) { data = null; }
+                if (!res.ok || !data || data.success !== true) {
+                    throw new Error((data && data.message) || `Failed to process check-in (${res.status})`);
+                }
+            }
+            showSuccess(data.message || 'Check-in successful!');
+            manualQrInput.value = '';
+            setTimeout(() => window.location.reload(), 1000);
+        } catch (err) {
+            showError(err.message || 'An error occurred. Please try again.');
+        }
+    }
+
+    if (manualSubmit && manualQrInput) {
+        manualSubmit.addEventListener('click', submitManualCode);
         manualQrInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                manualSubmit.click();
+                e.preventDefault();
+                submitManualCode();
             }
         });
     }

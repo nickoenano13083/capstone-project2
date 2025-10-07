@@ -27,6 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
         'phone',
         'address',
         'birthday',
@@ -281,13 +282,4 @@ class User extends Authenticatable
         return $this->role === 'Admin';
     }
     
-    /**
-     * Check if the user is a leader.
-     *
-     * @return bool
-     */
-    public function isLeader(): bool
-    {
-        return $this->role === 'Leader';
-    }
 }

@@ -12,39 +12,50 @@ class AdminUserController extends Controller
 {
     public function index(\Illuminate\Http\Request $request)
     {
-        $query = User::with(['member.chapter', 'preferredChapter'])->orderBy('created_at', 'desc');
-
+        $search = $request->input('search');
         $filterChapterId = $request->input('chapter_id');
+
+        // Get all chapters for filtering
+        $chapters = Chapter::orderBy('name')->get(['id', 'name']);
+
+        // Get all admins
+        $adminsQuery = User::with(['member.chapter', 'preferredChapter'])
+            ->where('role', 'Admin')
+            ->orderBy('name');
+
+        $admins = $adminsQuery->get();
+
+        // Get members with search and chapter filtering
+        $membersQuery = User::with(['member.chapter', 'preferredChapter'])
+            ->where('role', 'Member')
+            ->orderBy('created_at', 'desc');
+
+        // Apply search filter
+        if ($search) {
+            $membersQuery->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply chapter filter
         if ($filterChapterId) {
-            $query->where(function($q) use ($filterChapterId) {
+            $membersQuery->where(function($q) use ($filterChapterId) {
                 $q->whereHas('member', function ($memberQ) use ($filterChapterId) {
                     $memberQ->where('chapter_id', $filterChapterId);
                 })->orWhere('preferred_chapter_id', $filterChapterId);
             });
         }
 
-        if (auth()->user()->role === 'Leader') {
-            $leaderChapterIds = auth()->user()->ledChapters()->pluck('id');
-            $query->where(function($q) use ($leaderChapterIds) {
-                $q->whereHas('member', function ($memberQ) use ($leaderChapterIds) {
-                    $memberQ->whereIn('chapter_id', $leaderChapterIds);
-                })->orWhereIn('preferred_chapter_id', $leaderChapterIds);
-            });
-        }
-
-        $users = $query->paginate(10);
-
-        $chaptersQuery = Chapter::query();
-
-        if (auth()->user()->role === 'Leader') {
-            $leaderChapterIds = auth()->user()->ledChapters()->pluck('id');
-            $chaptersQuery->whereIn('id', $leaderChapterIds);
-        }
-
-        $chapters = $chaptersQuery->orderBy('name')->get(['id','name']);
+        $members = $membersQuery->paginate(15);
+        
+        // Get total members count (not paginated)
+        $totalMembers = User::where('role', 'Member')->count();
 
         return view('admin.users.index', [
-            'users' => $users,
+            'admins' => $admins,
+            'members' => $members,
+            'totalMembers' => $totalMembers,
             'chapters' => $chapters,
             'filterChapterId' => $filterChapterId,
         ]);
@@ -241,64 +252,40 @@ class AdminUserController extends Controller
     public function updateRole(Request $request, $id)
     {
         $request->validate([
-            'role' => 'required|in:Admin,Leader,Member'
+            'role' => 'required|in:Admin,Member'
         ]);
 
         $user = User::with('member')->findOrFail($id);
 
-        if (auth()->user()->role === 'Leader') {
-            $leaderChapterIds = auth()->user()->ledChapters()->pluck('id');
-            $isInScope = ($user->member && $leaderChapterIds->contains($user->member->chapter_id)) || 
-                         ($user->preferred_chapter_id && $leaderChapterIds->contains($user->preferred_chapter_id));
-            if (!$isInScope || $request->role === 'Admin') {
-                abort(403, 'Leaders can only manage users in their chapters and cannot assign Admin.');
-            }
+        // Only admins can change roles
+        if (auth()->user()->role !== 'Admin') {
+            abort(403, 'Only admins can change user roles.');
         }
 
+        // Prevent demoting yourself
+        if ($user->id === auth()->id() && $request->role === 'Member') {
+            return redirect()->back()->with('error', 'You cannot demote yourself from admin.');
+        }
+
+        $oldRole = $user->role;
+        
+        // Update user role
         $user->update(['role' => $request->role]);
 
-        // If promoting to Leader, do not automatically assign chapter leadership
-        if ($request->role === 'Leader') {
-            // Temporarily disabled automatic chapter leader assignment to prevent foreign key constraint errors
-            /*
-            $chapterId = $user->member?->chapter_id ?? $user->preferred_chapter_id;
-            
-            if ($chapterId) {
-                // User has a chapter, assign them as leader if unassigned
-                $chapter = Chapter::find($chapterId);
-                if ($chapter && (!$chapter->leader_id || $chapter->leader_type !== 'App\\Models\\Member')) {
-                    // Ensure member record exists and is saved before assignment
-                    $user->load('member'); // Refresh the relationship
-                    if ($user->member && $user->member->exists) {
-                        $chapter->leader_id = $user->member->id;
-                        $chapter->leader_type = 'App\\Models\\Member';
-                        $chapter->save();
-                    }
-                }
-            } else {
-                // User doesn't have a chapter, find an unassigned chapter or create one
-                $unassignedChapter = Chapter::whereNull('leader_id')->first();
-                if ($unassignedChapter) {
-                    // Ensure member record exists before assignment
-                    $user->load('member');
-                    if ($user->member && $user->member->exists) {
-                        $unassignedChapter->leader_id = $user->member->id;
-                        $unassignedChapter->leader_type = 'App\\Models\\Member';
-                        $unassignedChapter->save();
-                        
-                        // Update user's preferred chapter
-                        $user->preferred_chapter_id = $unassignedChapter->id;
-                        $user->save();
-                    }
-                } else {
-                    // No unassigned chapters, redirect back with warning
-                    return redirect()->back()->with('warning', 'User promoted to Leader but no unassigned chapters available. Please assign them to a specific chapter.');
-                }
-            }
-            */
+        // Update member record if it exists
+        if ($user->member) {
+            $user->member->update(['role' => $request->role]);
         }
 
-        return redirect()->back()->with('success', 'User role updated successfully.');
+        $action = $request->role === 'Admin' ? 'promoted to admin' : 'demoted to member';
+        return redirect()->back()->with('success', "User {$user->name} has been {$action} successfully.");
+    }
+
+    public function show($id)
+    {
+        $user = User::with(['member.chapter', 'preferredChapter'])->findOrFail($id);
+        
+        return view('admin.users.show', compact('user'));
     }
 
     public function removeLeader(Request $request, $id)

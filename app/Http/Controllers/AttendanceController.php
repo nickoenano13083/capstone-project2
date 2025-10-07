@@ -375,4 +375,24 @@ class AttendanceController extends Controller
         
         return view('attendance.qr-management', compact('event', 'activeQrCode', 'qrCodes'));
     }
+
+    /**
+     * Display all attendance records for a specific event (Admin/Leader only)
+     */
+    public function eventAttendance(Event $event)
+    {
+        if (!in_array(auth()->user()->role, ['Admin', 'Leader'])) {
+            abort(403, 'Unauthorized');
+        }
+
+        $attendances = Attendance::with(['member'])
+            ->where('event_id', $event->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('attendance.event', [
+            'event' => $event,
+            'attendances' => $attendances,
+        ]);
+    }
 }

@@ -103,7 +103,7 @@
                             </div>
                             <input type="hidden" name="phone" value="{{ old('phone', $member?->phone) }}">
                         @else
-                            <x-text-input id="phone" name="phone" type="tel" class="pl-10 block w-full min-h-[44px]" :value="old('phone', $member?->phone)" required />
+                            <x-text-input id="phone" name="phone" type="tel" class="pl-10 block w-full min-h-[44px]" :value="old('phone', $member?->phone)" required maxlength="11" minlength="11" inputmode="numeric" pattern="\d{11}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)" />
                         @endif
                     </div>
                     <x-input-error :messages="$errors->get('phone')" class="mt-1" />

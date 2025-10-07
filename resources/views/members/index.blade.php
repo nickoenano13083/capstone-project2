@@ -1118,12 +1118,7 @@
                                                            data-tooltip-position="top">
                                                             <i class="fas fa-eye w-4 h-4"></i>
                                                         </a>
-                                                        <a href="{{ route('members.edit', $member) }}" 
-                                                           class="text-white bg-yellow-500 hover:bg-yellow-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
-                                                           data-tooltip="Edit Member"
-                                                           data-tooltip-position="top">
-                                                            <i class="fas fa-edit w-4 h-4"></i>
-                                                        </a>
+                                                        
                                                         @if($member->is_archived)
                                                             <form action="{{ route('members.unarchive', $member) }}" method="POST" class="inline">
                                                                 @csrf
@@ -1254,11 +1249,7 @@
                                    data-tooltip="View Member">
                                     <i class="fas fa-eye w-4 h-4"></i>
                                 </a>
-                                <a href="{{ route('members.edit', $member) }}" 
-                                   class="text-white bg-yellow-500 hover:bg-yellow-600 p-2 rounded-full transition-colors duration-200 ease-in-out"
-                                   data-tooltip="Edit Member">
-                                    <i class="fas fa-edit w-4 h-4"></i>
-                                </a>
+                                
                                 @if($member->is_archived)
                                     <form action="{{ route('members.unarchive', $member) }}" method="POST" class="inline">
                                         @csrf

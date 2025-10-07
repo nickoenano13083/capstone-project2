@@ -258,12 +258,14 @@
                             </div>
                         @endif
 
-                        <!-- Prayer Date -->
+                        @if(auth()->user()->role !== 'Member')
+                        <!-- Prayer Date (Admins/Leaders only) -->
                         <div class="mb-4 mobile-form-group">
                             <x-input-label for="prayer_date" :value="__('Prayer Date')" />
-                            <input type="date" id="prayer_date" name="prayer_date" value="{{ old('prayer_date', date('Y-m-d')) }}" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                            <input type="date" id="prayer_date" name="prayer_date" value="{{ old('prayer_date', date('Y-m-d')) }}" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
                             <x-input-error :messages="$errors->get('prayer_date')" class="mt-2 mobile-error" />
                         </div>
+                        @endif
 
                         <!-- Desktop Submit Buttons -->
                         <div class="flex items-center justify-end mt-4 desktop-actions">

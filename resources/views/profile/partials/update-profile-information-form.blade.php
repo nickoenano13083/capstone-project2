@@ -47,6 +47,16 @@
             @endif
         </div>
 
+        <!-- Member Code (read-only) -->
+        @php $member = $user->member ?? \App\Models\Member::where('user_id', $user->id)->first(); @endphp
+        @if($member && $member->member_code)
+        <div>
+            <x-input-label for="member_code" :value="__('Member Code')" />
+            <x-text-input id="member_code" name="member_code" type="text" class="mt-1 block w-full bg-gray-100" :value="$member->member_code" readonly disabled />
+            <p class="text-xs text-gray-500 mt-1">This is your personal membership ID.</p>
+        </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

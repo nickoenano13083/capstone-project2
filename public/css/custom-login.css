@@ -135,6 +135,47 @@ body, html {
     box-sizing: border-box;
 }
 
+/* Match select styling to input fields */
+.input-wrapper select {
+    width: 100%;
+    padding: 0.8rem 2.8rem 0.8rem 3rem; /* leave room for icon and arrow */
+    border: none;
+    border-radius: 30px;
+    background-color: #d6dbe5;
+    color: #333;
+    font-size: 1rem;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: none;
+}
+
+/* Add dropdown arrow for selects */
+.input-wrapper.is-select::after {
+    content: '\f078'; /* Font Awesome chevron-down */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    pointer-events: none;
+}
+
+/* Hover and focus styles */
+.input-wrapper select:focus,
+.input-wrapper input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(84, 136, 203, 0.35);
+}
+
+.input-wrapper:hover select,
+.input-wrapper:hover input {
+    background-color: #e2e6ee;
+}
+
 .input-wrapper input::placeholder {
     color: #555;
 }
@@ -260,6 +301,11 @@ body, html {
         font-size: 0.95rem;
     }
 
+    .input-wrapper select {
+        padding: 0.7rem 2.6rem 0.7rem 2.8rem;
+        font-size: 0.95rem;
+    }
+
     .login-button {
         padding: 0.7rem 1rem;
         font-size: 1rem;
@@ -292,6 +338,11 @@ body, html {
 
     .input-wrapper input {
         padding: 0.6rem 0.8rem 0.6rem 2.5rem;
+        font-size: 0.9rem;
+    }
+
+    .input-wrapper select {
+        padding: 0.6rem 2.4rem 0.6rem 2.5rem;
         font-size: 0.9rem;
     }
 

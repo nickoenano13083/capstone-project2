@@ -39,6 +39,12 @@
                         <div class="text-center md:text-left">
                             <h1 class="text-2xl font-bold text-gray-900">{{ $user->name }}</h1>
                             <p class="text-gray-600">{{ $user->email }}</p>
+                            @php $member = $user->member ?? \App\Models\Member::where('user_id', $user->id)->first(); @endphp
+                            @if($member && $member->member_code)
+                                <p class="text-sm mt-1">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Member Code: <span class="ml-1 font-semibold">{{ $member->member_code }}</span></span>
+                                </p>
+                            @endif
                             @if($user->email_verified_at)
                                 <span class="inline-flex items-center mt-1 text-sm text-green-600">
                                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -120,6 +126,12 @@
                                                     <option value="Female" {{ old('gender', $user->gender) === 'Female' ? 'selected' : '' }}>{{ __('Female') }}</option>
                                                 </select>
                                                 <x-input-error class="mt-2" :messages="$errors->get('gender')" />
+                                            </div>
+
+                                            <div>
+                                                <x-input-label for="phone" :value="__('Phone Number')" />
+                                                <x-text-input id="phone" name="phone" type="tel" class="mt-1 block w-full" :value="old('phone', $user->member?->phone)" maxlength="11" minlength="11" inputmode="numeric" pattern="\d{11}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)" />
+                                                <x-input-error class="mt-2" :messages="$errors->get('phone')" />
                                             </div>
 
                                             <div class="md:col-span-2">

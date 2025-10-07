@@ -624,24 +624,26 @@
                                                 Prayer Request
                                             </div>
                                         </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            <div class="flex items-center">
-                                                <i class="far fa-calendar-alt mr-2"></i>
-                                                Prayer Date
-                                            </div>
-                                        </th>
+                                        @if(auth()->user()->role !== 'Member')
+                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                <div class="flex items-center">
+                                                    <i class="far fa-calendar-alt mr-2"></i>
+                                                    Prayer Date
+                                                </div>
+                                            </th>
+                                        @endif
                                         @if(auth()->user()->role !== 'Member')
                                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                                 <div class="flex items-center">
                                                     <i class="fas fa-tag mr-2"></i>
-                                                    Category
+                                                    Status
                                                 </div>
                                             </th>
                                         @endif
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             <div class="flex items-center">
                                                 <i class="fas fa-info-circle mr-2"></i>
-                                                Status
+                                                Category
                                             </div>
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -687,14 +689,16 @@
                                                     </span>
                                                 @endif
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap" data-label="Prayer Date">
-                                                <div class="text-sm text-gray-900">
-                                                    <i class="far fa-calendar-alt mr-1 text-indigo-500"></i> {{ $request->prayer_date->format('M d, Y') }}
-                                                </div>
-                                                <div class="text-sm text-gray-500">
-                                                    <i class="far fa-clock mr-1 text-indigo-400"></i> {{ $request->prayer_date->format('h:i A') }}
-                                                </div>
-                                            </td>
+                                            @if(auth()->user()->role !== 'Member')
+                                                <td class="px-6 py-4 whitespace-nowrap" data-label="Prayer Date">
+                                                    <div class="text-sm text-gray-900">
+                                                        <i class="far fa-calendar-alt mr-1 text-indigo-500"></i> {{ $request->prayer_date->format('M d, Y') }}
+                                                    </div>
+                                                    <div class="text-sm text-gray-500">
+                                                        <i class="far fa-clock mr-1 text-indigo-400"></i> {{ $request->prayer_date->format('h:i A') }}
+                                                    </div>
+                                                </td>
+                                            @endif
                                             <td class="px-6 py-4 whitespace-nowrap" data-label="Status">
                                                 @php
                                                     $statusClass = [
@@ -746,7 +750,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="{{ auth()->user()->role === 'Member' ? '4' : '5' }}" class="px-6 py-12 text-center">
+                                            <td colspan="{{ auth()->user()->role === 'Member' ? '3' : '5' }}" class="px-6 py-12 text-center">
                                                 <div class="flex flex-col items-center justify-center">
                                                     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                                                         <i class="fas fa-praying-hands text-2xl text-gray-400"></i>

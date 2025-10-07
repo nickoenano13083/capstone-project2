@@ -429,14 +429,7 @@
                         </li>
                         @endif
                         @if(auth()->user()->role === 'Member')
-                        <li>
-                            <a href="{{ route('profile.my-qr-code') }}"
-                               class="nav-item flex items-center px-4 py-3 rounded-lg text-slate-200 hover:text-white transition-colors duration-200 {{ request()->routeIs('profile.my-qr-code') ? 'bg-white text-slate-800' : '' }}"
-                            >
-                                <i class="fas fa-qrcode w-5 text-center mr-3 {{ request()->routeIs('profile.my-qr-code') ? 'text-slate-800' : '' }}"></i>
-                                <span class="{{ request()->routeIs('profile.my-qr-code') ? 'text-slate-800' : '' }}">My QR Code</span>
-                            </a>
-                        </li>
+                        {{-- QR Code link removed per request --}}
                         @endif
                         {{-- Analytics link hidden intentionally --}}
                         <li>

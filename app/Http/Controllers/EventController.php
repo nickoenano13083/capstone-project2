@@ -313,7 +313,7 @@ class EventController extends Controller
         if (!auth()->check() || !in_array(auth()->user()->role, ['Admin', 'Leader'])) {
             abort(403, 'Unauthorized');
         }
-        $validated = $request->validate([
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
@@ -321,9 +321,15 @@ class EventController extends Controller
             'time' => 'required|date_format:H:i',
             'end_time' => 'nullable|date_format:H:i|after:time',
             'location' => 'required|string|max:255',
-            'status' => 'required|in:upcoming,ongoing,completed',
             'chapter_id' => 'required|exists:chapters,id',
-        ]);
+        ];
+
+        // Status is auto-set for Admins during create; Leaders must provide it
+        if (strtolower(auth()->user()->role) === 'leader') {
+            $rules['status'] = 'required|in:upcoming,ongoing,completed';
+        }
+
+        $validated = $request->validate($rules);
 
         if (auth()->check() && strtolower(auth()->user()->role) === 'leader') {
             $user = auth()->user();
@@ -340,54 +346,60 @@ class EventController extends Controller
             }
         }
 
-        // Check for duplicate events
-        $existingEvent = Event::where('title', $validated['title'])
+        // Check for duplicate events (same chapter, date, time, and location regardless of title)
+        $sameSlotEvent = Event::where('chapter_id', $validated['chapter_id'])
             ->where('date', $validated['date'])
             ->where('time', $validated['time'])
-            ->where('chapter_id', $validated['chapter_id'])
+            ->where('location', $validated['location'])
             ->first();
 
-        if ($existingEvent) {
+        if ($sameSlotEvent) {
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['title' => 'An event with the same title, date, time, and chapter already exists.']);
+                ->withErrors(['location' => 'An event at the same date, time, and location already exists for this chapter.']);
         }
 
-        // Auto-complete if event date has passed or end time has passed
+        // Check for duplicate events (same title, chapter, date, time, and location)
+        $sameTitleAndSlotEvent = Event::where('chapter_id', $validated['chapter_id'])
+            ->where('title', $validated['title'])
+            ->where('date', $validated['date'])
+            ->where('time', $validated['time'])
+            ->where('location', $validated['location'])
+            ->first();
+
+        if ($sameTitleAndSlotEvent) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['title' => 'An event with the same title, date, time, and location already exists for this chapter.']);
+        }
+
+        // Auto-set status for Admins; Leaders keep chosen status
         $eventDate = $validated['date'] instanceof \Carbon\Carbon ? $validated['date']->format('Y-m-d') : $validated['date'];
         $today = now()->toDateString();
-        
-        if ($eventDate < $today) {
-            // Event date has passed
-            $validated['status'] = 'completed';
-            \Log::info('Event auto-completed due to past date');
-        } elseif ($eventDate == $today && !empty($validated['end_time'])) {
-            // Event is today, check if end time has passed
-            $dateString = $eventDate;
-            $endTime = $validated['end_time'];
-            
-            // Handle both H:i and H:i:s formats
-            if (strlen($endTime) == 5) { // H:i format
-                $endAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $dateString . ' ' . $endTime);
-            } else { // H:i:s format
-                $endAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateString . ' ' . $endTime);
-            }
-            
-            $now = now();
-            
-            // Debug logging
-            \Log::info('Event creation auto-completion check', [
-                'event_date' => $validated['date'],
-                'event_time' => $validated['time'],
-                'end_time' => $validated['end_time'],
-                'end_datetime' => $endAt->toDateTimeString(),
-                'current_time' => $now->toDateTimeString(),
-                'is_past' => $now->greaterThan($endAt)
-            ]);
-            
-            if ($now->greaterThan($endAt)) {
+
+        if (strtolower(auth()->user()->role) === 'admin') {
+            if ($eventDate === $today) {
+                $validated['status'] = 'ongoing';
+            } elseif ($eventDate > $today) {
+                $validated['status'] = 'upcoming';
+            } else { // past
                 $validated['status'] = 'completed';
-                \Log::info('Event auto-completed due to past end time');
+            }
+        } else {
+            // Leaders: keep existing completion logic if end time already passed today
+            if ($eventDate < $today) {
+                $validated['status'] = 'completed';
+            } elseif ($eventDate == $today && !empty($validated['end_time'])) {
+                $dateString = $eventDate;
+                $endTime = $validated['end_time'];
+                if (strlen($endTime) == 5) {
+                    $endAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $dateString . ' ' . $endTime);
+                } else {
+                    $endAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $dateString . ' ' . $endTime);
+                }
+                if (now()->greaterThan($endAt)) {
+                    $validated['status'] = 'completed';
+                }
             }
         }
 
@@ -920,46 +932,129 @@ class EventController extends Controller
      */
     public function checkIn(Request $request, Event $event)
     {
+        // Gate by event timing/status: only allow during ongoing window
+        $eventDate = $event->date instanceof \Carbon\Carbon ? $event->date->format('Y-m-d') : (string) $event->date;
+        $startAt = null;
+        $endAt = null;
+        if (!empty($eventDate) && !empty($event->time)) {
+            $timeFmt = strlen($event->time) === 5 ? 'Y-m-d H:i' : 'Y-m-d H:i:s';
+            $startAt = \Carbon\Carbon::createFromFormat($timeFmt, $eventDate . ' ' . $event->time);
+        } elseif (!empty($eventDate)) {
+            $startAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $eventDate . ' 00:00:00');
+        }
+        if (!empty($eventDate) && !empty($event->end_time)) {
+            $endFmt = strlen($event->end_time) === 5 ? 'Y-m-d H:i' : 'Y-m-d H:i:s';
+            $endAt = \Carbon\Carbon::createFromFormat($endFmt, $eventDate . ' ' . $event->end_time);
+        } elseif (!empty($eventDate)) {
+            // Default end of day if no end_time provided
+            $endAt = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $eventDate . ' 23:59:59');
+        }
+        $now = now();
+
+        // Auto-transition status based on time
+        if ($startAt && $endAt) {
+            if ($now->lt($startAt) && $event->status !== 'upcoming') {
+                $event->status = 'upcoming';
+                $event->save();
+            } elseif ($now->between($startAt, $endAt) && $event->status !== 'ongoing') {
+                $event->status = 'ongoing';
+                $event->save();
+            } elseif ($now->gt($endAt) && $event->status !== 'completed') {
+                $event->status = 'completed';
+                $event->save();
+            }
+        }
+
+        // Block check-in unless ongoing
+        if ($event->status !== 'ongoing') {
+            $message = 'Check-in is only available while the event is ongoing.';
+            if ($request->is('api/*') || $request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $message], 403);
+            }
+            return back()->withErrors(['qr_data' => $message]);
+        }
+
         $qrData = $request->input('qr_data');
         
         if (empty($qrData)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'QR code data is required.'
-            ], 400);
-        }
-
-        // Try to find member by QR code data
-        $member = \App\Models\Member::where('qr_code', $qrData)->first();
-        
-        if (!$member) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid QR code. Please make sure you\'re using a valid check-in code.'
-            ], 404);
-        }
-
-        // If user is authenticated, verify they have access to this member's data
-        $user = auth()->user();
-        if ($user) {
-            // For members, they can only check themselves in
-            if ($user->role === 'Member' && $user->member_id !== $member->id) {
+            if ($request->is('api/*') || $request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'You can only check in with your own QR code.'
-                ], 403);
+                    'message' => 'Member ID code is required.'
+                ], 400);
             }
-            
-            // For leaders/admins, check chapter access
-            if (in_array($user->role, ['Leader', 'Admin'])) {
-                $hasAccess = $member->chapter_id === $user->preferred_chapter_id || 
-                            $user->chapters->contains('id', $member->chapter_id);
+            return back()->withErrors(['qr_data' => 'Member ID code is required.']);
+        }
+
+        // Resolve member strictly by member_code in flexible formats (supports YYYY-000123, YYYY123, 000123, 123)
+        $member = null;
+        $rawInput = trim((string) $qrData);
+        $upperInput = strtoupper($rawInput);
+
+        // Exact member_code match (e.g., 2025-000123)
+        $member = \App\Models\Member::where('member_code', $upperInput)->first();
+
+        // Formats like YYYY123, YYYY_123, YYYY-123 → normalize to YYYY-000123 and lookup
+        if (!$member && preg_match('/^(\d{4})[-_ ]?(\d{1,9})$/', $rawInput, $m)) {
+            $year = $m[1];
+            $padded = $year . '-' . str_pad((string) $m[2], 6, '0', STR_PAD_LEFT);
+            $member = \App\Models\Member::where('member_code', $padded)->first();
+        }
+
+        // Digits only like 123 or 000123: try across recent years (current and previous) as suffix
+        if (!$member && preg_match('/^\d+$/', $rawInput)) {
+            $suffix = str_pad((string) intval($rawInput, 10), 6, '0', STR_PAD_LEFT);
+            $yearsToTry = [date('Y'), date('Y', strtotime('-1 year')), date('Y', strtotime('-2 years'))];
+            foreach ($yearsToTry as $yr) {
+                $candidate = $yr . '-' . $suffix;
+                $member = \App\Models\Member::where('member_code', $candidate)->first();
+                if ($member) break;
+            }
+        }
+        
+        if (!$member) {
+            if ($request->is('api/*') || $request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid member code. Please enter a valid member code (e.g., MEM-000123).'
+                ], 404);
+            }
+            return back()->withErrors(['qr_data' => 'Invalid member code. Please enter a valid member code (e.g., MEM-000123).']);
+        }
+
+        // If this is a web route (not API), enforce authorization rules.
+        // The API route is intended for kiosk/public scanning and should be permissive.
+        if (!$request->is('api/*')) {
+            $user = auth()->user();
+            if ($user) {
+                // For members, they can only check themselves in
+                if ($user->role === 'Member' && $user->member_id !== $member->id) {
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'You can only check in with your own QR code.'
+                        ], 403);
+                    }
+                    return back()->withErrors(['qr_data' => 'You can only check in with your own QR code.']);
+                }
                 
-                if (!$hasAccess) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'You do not have access to check in members from this chapter.'
-                    ], 403);
+                // For leaders/admins, check chapter access (Admins bypass)
+                if (in_array($user->role, ['Leader', 'Admin'])) {
+                    if ($user->role === 'Admin') {
+                        // Admins can check in any member
+                    } else {
+                        $hasAccess = $member->chapter_id === $user->preferred_chapter_id || 
+                                     ($user->chapters && $user->chapters->contains('id', $member->chapter_id));
+                        if (!$hasAccess) {
+                        if ($request->wantsJson() || $request->ajax()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'You do not have access to check in members from this chapter.'
+                            ], 403);
+                        }
+                        return back()->withErrors(['qr_data' => 'You do not have access to check in members from this chapter.']);
+                        }
+                    }
                 }
             }
         }
@@ -971,11 +1066,14 @@ class EventController extends Controller
             ->first();
 
         if ($existingCheckIn) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This member has already checked in to this event.',
-                'check_in_time' => $existingCheckIn->created_at
-            ]);
+            if ($request->is('api/*') || $request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This member has already checked in to this event.',
+                    'check_in_time' => $existingCheckIn->created_at
+                ]);
+            }
+            return back()->withErrors(['qr_data' => 'This member has already checked in to this event.']);
         }
 
         // Record the attendance
@@ -984,24 +1082,32 @@ class EventController extends Controller
             'member_id' => $member->id,
             'status' => 'present',
             'notes' => $request->input('notes', null),
+            // If attendance table has check_in/check_in_time column, prefer it; else use created_at timestamp
+            // 'check_in' => now(),
             'attendance_date' => now()->toDateString(),
             'created_at' => now(),
             'updated_at' => now()
         ]);
 
         if (!$attendanceId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to record attendance. Please try again.'
-            ], 500);
+            if ($request->is('api/*') || $request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to record attendance. Please try again.'
+                ], 500);
+            }
+            return back()->withErrors(['qr_data' => 'Failed to record attendance. Please try again.']);
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Check-in successful!',
-            'member_name' => $member->first_name . ' ' . $member->last_name,
-            'check_in_time' => now()
-        ]);
+        if ($request->is('api/*') || $request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Check-in successful!',
+                'member_name' => $member->name ?? trim(($member->first_name ?? '').' '.($member->last_name ?? '')),
+                'check_in_time' => now()
+            ]);
+        }
+        return back()->with('success', 'Check-in successful!');
     }
 
     /**

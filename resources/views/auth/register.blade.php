@@ -49,25 +49,30 @@
                         </div>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
-                            <input id="email" type="email" name="email" placeholder="Enter your email..." value="{{ old('email') }}" required autocomplete="username">
+                            <input id="email" type="email" name="email" placeholder="Enter your Active email..." value="{{ old('email') }}" required autocomplete="username">
                         </div>
                         <div class="input-wrapper">
                             <i class="fas fa-phone"></i>
-                            <input id="phone" type="tel" name="phone" placeholder="Enter your phone number..." value="{{ old('phone') }}" required>
+                            <input id="phone" type="tel" name="phone" placeholder="Enter your phone number..." value="{{ old('phone') }}" required maxlength="11" minlength="11" inputmode="numeric" pattern="\d{11}" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
                         </div>
                         <div class="input-wrapper">
                             <i class="fas fa-calendar"></i>
                             <input id="birthday" type="date" name="birthday" value="{{ old('birthday') }}" required>
                         </div>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper is-select">
                             <i class="fas fa-hashtag"></i>
-                            <input id="age" type="number" name="age" placeholder="Enter your age..." value="{{ old('age') }}" required min="1" max="120">
+                            <select id="age" name="age" required>
+                                <option value="">Select your age</option>
+                                @for ($i = 10; $i <= 100; $i++)
+                                    <option value="{{ $i }}" {{ old('age') == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                @endfor
+                            </select>
                         </div>
                         <div class="input-wrapper">
                             <i class="fas fa-home"></i>
                             <input id="address" type="text" name="address" placeholder="Enter your address..." value="{{ old('address') }}" required>
                         </div>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper is-select">
                             <i class="fas fa-venus-mars"></i>
                             <select id="gender" name="gender" required>
                                 <option value="">Select your gender</option>
@@ -83,7 +88,7 @@
                             <i class="fas fa-lock"></i>
                             <input id="password_confirmation" type="password" name="password_confirmation" placeholder="Confirm your password..." required autocomplete="new-password">
                         </div>
-                        <div class="input-wrapper">
+                        <div class="input-wrapper is-select">
                             <i class="fas fa-church"></i>
                             <select id="preferred_chapter_id" name="preferred_chapter_id" required>
                                 <option value="">Select your Sunday service chapter</option>

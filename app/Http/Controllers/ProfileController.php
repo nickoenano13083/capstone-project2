@@ -84,16 +84,36 @@ class ProfileController extends Controller
      */
     public function updatePersonalInfo(Request $request): RedirectResponse
     {
+        // Normalize phone to digits only before validating
+        $request->merge([
+            'phone' => preg_replace('/[^0-9]/', '', (string) $request->input('phone')),
+        ]);
+
         $validated = $request->validate([
             'birthday' => ['nullable', 'date', 'before:today'],
             'age' => ['nullable', 'integer', 'min:1', 'max:120'],
             'gender' => ['nullable', 'in:Male,Female'],
             'address' => ['nullable', 'string', 'max:500'],
+            'phone' => ['nullable', 'regex:/^\\d{11}$/', 'unique:members,phone,' . $request->user()->member?->id],
         ]);
 
         $user = $request->user();
-        $user->fill($validated);
+        
+        // Keep age consistent: compute from birthday when provided
+        if (!empty($validated['birthday'])) {
+            $validated['age'] = \Carbon\Carbon::parse($validated['birthday'])->age;
+        }
+        
+        // Update user record (excluding phone field)
+        $userData = collect($validated)->except('phone')->toArray();
+        $user->fill($userData);
         $user->save();
+
+        // Update member record if it exists (including phone field)
+        if ($user->member) {
+            $user->member->fill($validated);
+            $user->member->save();
+        }
 
         return Redirect::route('profile.edit')
             ->with('status', 'personal-info-updated');

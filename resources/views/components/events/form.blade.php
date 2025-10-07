@@ -147,6 +147,9 @@
                                 </div>
                             </div>
                             <x-input-error class="mt-1" :messages="$errors->get('date')" />
+                            @if($errors->has('location'))
+                                <p class="mt-1 text-sm text-red-600">{{ $errors->first('location') }}</p>
+                            @endif
                         </div>
 
                         <!-- Time -->
@@ -168,6 +171,9 @@
                                 </div>
                             </div>
                             <x-input-error class="mt-1" :messages="$errors->get('time')" />
+                            @if($errors->has('title'))
+                                <p class="mt-1 text-sm text-red-600">{{ $errors->first('title') }}</p>
+                            @endif
                         </div>
 
                         <!-- End Time -->
@@ -218,27 +224,30 @@
                             <input type="hidden" name="chapter_id" value="{{ $autoSelectChapter }}">
                         @endif
 
-                        <!-- Status -->
-                        <div class="md:col-span-2 space-y-2">
-                            <x-input-label for="status" :value="__('Event Status')" class="text-sm font-medium text-gray-700" />
-                            <div class="relative">
-                                <select 
-                                    id="status" 
-                                    name="status" 
-                                    class="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 appearance-none bg-white"
-                                >
-                                    <option value="upcoming" {{ old('status', $event?->status) === 'upcoming' ? 'selected' : '' }}>⏳ Upcoming</option>
-                                    <option value="ongoing" {{ old('status', $event?->status) === 'ongoing' ? 'selected' : '' }}>▶️ Ongoing</option>
-                                    <option value="completed" {{ old('status', $event?->status) === 'completed' ? 'selected' : '' }}>✅ Completed</option>
-                                </select>
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
+                        <!-- Status: hidden for Admins during create (auto-set), shown otherwise -->
+                        @php $role = strtolower(auth()->user()->role ?? 'guest'); @endphp
+                        @if($event || $role === 'leader')
+                            <div class="md:col-span-2 space-y-2">
+                                <x-input-label for="status" :value="__('Event Status')" class="text-sm font-medium text-gray-700" />
+                                <div class="relative">
+                                    <select 
+                                        id="status" 
+                                        name="status" 
+                                        class="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 appearance-none bg-white"
+                                    >
+                                        <option value="upcoming" {{ old('status', $event?->status) === 'upcoming' ? 'selected' : '' }}>⏳ Upcoming</option>
+                                        <option value="ongoing" {{ old('status', $event?->status) === 'ongoing' ? 'selected' : '' }}>▶️ Ongoing</option>
+                                        <option value="completed" {{ old('status', $event?->status) === 'completed' ? 'selected' : '' }}>✅ Completed</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
                                 </div>
+                                <x-input-error class="mt-1" :messages="$errors->get('status')" />
                             </div>
-                            <x-input-error class="mt-1" :messages="$errors->get('status')" />
-                        </div>
+                        @endif
                     </div>
                 </div>
 
